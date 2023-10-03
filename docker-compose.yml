@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  postgres_hakobi_ya:
+    image: postgres:latest
+    container_name: pg_hakobi_ya
+    restart: always
+    ports:
+      - "5423:5432"
+    volumes:
+      - ./tmp/pg:/var/lib/postgresql/data
+    env_file:
+      - docker.env
+    networks:
+      - postgres
+  
+  pg_adminer:
+    image: adminer
+    container_name: adminer_hakobi_ya
+    restart: always
+    ports:
+      - "8095:8080"
+    env_file:
+      - docker.env
+    networks:
+      - postgres
+
+networks:
+  postgres:
+    driver: bridge
+
+
+    
