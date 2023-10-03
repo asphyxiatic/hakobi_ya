@@ -4,8 +4,6 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { UsersService } from '../../users/services/users.service.js';
-import { RegisterDto } from '../dto/register.dto.js';
-import { RegisterResponseDto } from '../dto/register-response.dto.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
 import config from '../../config/config.js';
 import { JwtToolsService } from '../../jwt/services/jwt-tools.service.js';
@@ -13,6 +11,8 @@ import { CreatePairTokens } from '../interfaces/create-pair-tokens.interface.js'
 import { TokensService } from '../../tokens/services/tokens.service.js';
 import { SignInDto } from '../dto/sign-in.dto.js';
 import { SignInResponseDto } from '../dto/sign-in-response.dto.js';
+import { SignUpDto } from '../dto/sign-up.dto.js';
+import { SignUpResponseDto } from '../dto/sign-up-response.dto.js';
 
 @Injectable()
 export class AuthService {
@@ -26,10 +26,10 @@ export class AuthService {
   ) {}
 
   //-------------------------------------------------------------------------
-  public async register(
-    credentials: RegisterDto,
+  public async signUp(
+    credentials: SignUpDto,
     fingerprint: string,
-  ): Promise<RegisterResponseDto> {
+  ): Promise<SignUpResponseDto> {
     const user = await this.usersService.findByEmail(credentials.email);
 
     if (user) {

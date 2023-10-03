@@ -9,4 +9,6 @@ export default cleanEnv(process.env, {
   JWT_ACCESS_SECRET_KEY: str(),
   JWT_REFRESH_SECRET_KEY: str(),
   JWT_RECOVERY_SECRET_KEY: str(),
+  MAIL_TRANSPORT: str(),
+  MAIL_FROM_NAME: str(),
 });

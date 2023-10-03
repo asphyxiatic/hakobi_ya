@@ -15,13 +15,13 @@ export class UsersService {
   ) {}
 
   //-------------------------------------------------------------
-  public async create(createOptions: Partial<UserEntity>): Promise<UserEntity> {
+  public async create(credentials: UserCredentials): Promise<UserEntity> {
     const hashedPassword = bcrypt.hashSync(
-      createOptions.password,
+      credentials.password,
       this.saltRounds,
     );
     return this.usersRepository.save({
-      ...createOptions,
+      ...credentials,
       password: hashedPassword,
     });
   }
@@ -37,17 +37,19 @@ export class UsersService {
   }
 
   //-------------------------------------------------------------
-  public async findUserForCredentials({
-    email,
-    password,
-  }: UserCredentials): Promise<UserEntity> {
-    const user = await this.findByEmail(email);
+  public async findUserForCredentials(
+    credentials: UserCredentials,
+  ): Promise<UserEntity> {
+    const user = await this.findByEmail(credentials.email);
 
     if (!user) {
       return undefined;
     }
 
-    const passwordIsValid = bcrypt.compareSync(password, user.password);
+    const passwordIsValid = bcrypt.compareSync(
+      credentials.password,
+      user.password,
+    );
 
     if (!passwordIsValid) {
       return undefined;
