@@ -13,7 +13,7 @@ export class EntranceEntity extends BaseEntity {
   completed!: boolean;
 
   @Column({ name: 'house_id', type: 'uuid', nullable: false })
-  houseId!: string;
+  houseId!: HouseEntity['id'];
 
   @ManyToOne(() => HouseEntity, (house) => house.entrances, {
     onUpdate: 'CASCADE',

@@ -18,7 +18,7 @@ export class HouseEntity extends BaseEntity {
   houseName!: string;
 
   @Column({ name: 'address_id', type: 'uuid', nullable: false })
-  addressId!: string;
+  addressId!: AddressEntity['id'];
 
   @OneToMany(() => EntranceEntity, (entrance) => entrance.house)
   entrances!: Relation<EntranceEntity[]>;
