@@ -6,31 +6,31 @@ import {
 import { Repository } from 'typeorm';
 import { HouseEntity } from '../entities/house.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
-import { WriteEntrancesService } from '../../entrances/services/write-entrances.service.js';
+import { EntrancesService } from '../../entrances/services/entrances.service.js';
 import { CreateHouse } from '../interfaces/create-house.interface.js';
 import { UpdateHouse } from '../interfaces/update-house.interface.js';
 import { DeleteHouse } from '../interfaces/delete-house.interface.js';
 
 @Injectable()
-export class WriteHousesService {
+export class HousesService {
   constructor(
     @InjectRepository(HouseEntity)
     private readonly housesRepository: Repository<HouseEntity>,
-    private readonly writeEntrancesService: WriteEntrancesService,
+    private readonly entrancesService: EntrancesService,
   ) {}
 
   //--------------------------------------------------------------------------
   public async create({
-    addressId,
+    streetId,
     houseName,
     quantityEntrances,
   }: CreateHouse): Promise<HouseEntity> {
     const newHouse = await this.housesRepository.save({
-      addressId: addressId,
+      streetId: streetId,
       houseName: houseName,
     });
 
-    const entrances = await this.writeEntrancesService.createEntrancesForHouse({
+    const entrances = await this.entrancesService.createEntrancesForHouse({
       houseId: newHouse.id,
       quantity: quantityEntrances,
     });
@@ -53,7 +53,7 @@ export class WriteHousesService {
       throw new NotFoundException('🚨 не найден дом в базе данных!');
     }
 
-    let updateHouse;
+    let updateHouse = house;
 
     if (houseName) {
       updateHouse = await this.housesRepository.save({
@@ -62,21 +62,19 @@ export class WriteHousesService {
       });
     }
 
-    let updateEntrances;
+    let updateEntrances = house.entrances;
 
     if (quantityEntrances) {
       updateEntrances =
-        await this.writeEntrancesService.updateEntrancesForHouse({
+        await this.entrancesService.updateEntrancesForHouse({
           houseId: houseId,
           quantity: quantityEntrances,
         });
     }
 
-    const houseUpdatedResponse = houseName ? updateHouse : house;
-
     return {
-      ...houseUpdatedResponse,
-      entrances: quantityEntrances ? updateEntrances : house.entrances,
+      ...updateHouse,
+      entrances: updateEntrances,
     };
   }
 

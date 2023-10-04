@@ -1,3 +1,3 @@
 export interface RequestParams {
-  addressId?: string;
+  streetId?: string;
 }

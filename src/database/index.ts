@@ -1,17 +1,17 @@
 import { DataSource } from 'typeorm';
 import config from '../config/config.js';
 import { UserEntity } from '../users/entities/user.entity.js';
-import { AddressEntity } from '../addresses/entities/address.entity.js';
 import { HouseEntity } from '../houses/entities/house.entity.js';
 import { EntranceEntity } from '../entrances/entities/entrance.entity.js';
 import { TokenEntity } from '../tokens/entities/token.entity.js';
+import { StreetEntity } from '../streets/entities/street.entity.js';
 
 export const appDataSource = new DataSource({
   type: 'postgres',
   entities: [
     UserEntity,
     TokenEntity,
-    AddressEntity,
+    StreetEntity,
     HouseEntity,
     EntranceEntity,
   ],

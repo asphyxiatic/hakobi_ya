@@ -1,8 +1,8 @@
-import { AddressEntity } from '../../addresses/entities/address.entity.js';
+import { StreetEntity } from '../../streets/entities/street.entity.js';
 import { HouseEntity } from '../entities/house.entity.js';
 
 export interface CreateHouse {
-  addressId: AddressEntity['id'];
+  streetId: StreetEntity['id'];
   houseName: HouseEntity['houseName'];
   quantityEntrances: number;
 }

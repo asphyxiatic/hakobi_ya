@@ -1,12 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { EntranceEntity } from '../entities/entrance.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateEntrance } from '../interfaces/create-entrance.interface.js';
 import { UpdateEntrance } from '../interfaces/update-entrance.interface.js';
+import { CompleteEntrance } from '../interfaces/complete-entrance.interface.js';
 
 @Injectable()
-export class WriteEntrancesService {
+export class EntrancesService {
   constructor(
     @InjectRepository(EntranceEntity)
     private readonly entrancesRepository: Repository<EntranceEntity>,
@@ -60,5 +61,28 @@ export class WriteEntrancesService {
     });
 
     return entrances;
+  }
+
+  // ---------------------------------------------------------------
+  public async settingСompletionEntrance({
+    houseId,
+    numberEntrance,
+    complete,
+  }: CompleteEntrance): Promise<EntranceEntity> {
+    const entrance = await this.entrancesRepository.findOne({
+      where: { houseId: houseId, numberEntrance: numberEntrance },
+    });
+
+    if (!entrance) {
+      throw new NotFoundException('🚨 не найден подъезд!');
+    }
+
+    const updatedСonditionEntrance = await this.entrancesRepository.save({
+      id: entrance.id,
+      houseId: houseId,
+      completed: complete,
+    });
+
+    return updatedСonditionEntrance;
   }
 }

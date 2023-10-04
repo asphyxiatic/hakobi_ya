@@ -7,7 +7,7 @@ import {
   Relation,
 } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity.js';
-import { AddressEntity } from '../../addresses/entities/address.entity.js';
+import { StreetEntity } from '../../streets/entities/street.entity.js';
 import { EntranceEntity } from '../../entrances/entities/entrance.entity.js';
 
 const tableName = 'houses';
@@ -17,16 +17,16 @@ export class HouseEntity extends BaseEntity {
   @Column({ name: 'house_name', type: 'varchar', nullable: false })
   houseName!: string;
 
-  @Column({ name: 'address_id', type: 'uuid', nullable: false })
-  addressId!: AddressEntity['id'];
+  @Column({ name: 'street_id', type: 'uuid', nullable: false })
+  streetId!: StreetEntity['id'];
 
   @OneToMany(() => EntranceEntity, (entrance) => entrance.house)
   entrances!: Relation<EntranceEntity[]>;
 
-  @ManyToOne(() => AddressEntity, (address) => address.houses, {
+  @ManyToOne(() => StreetEntity, (street) => street.houses, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'address_id' })
-  address!: Relation<AddressEntity>;
+  @JoinColumn({ name: 'street_id' })
+  street!: Relation<StreetEntity>;
 }

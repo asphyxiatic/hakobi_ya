@@ -1,8 +1,8 @@
 import { IsArray, IsDefined, IsUUID } from 'class-validator';
 
-export class DeleteAddressesDto {
+export class DeleteStreetsDto {
   @IsArray()
   @IsUUID('4', { each: true })
   @IsDefined()
-  addressIds: string[];
+  streetIds: string[];
 }

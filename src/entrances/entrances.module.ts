@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EntranceEntity } from './entities/entrance.entity.js';
-import { WriteEntrancesService } from './services/write-entrances.service.js';
+import { EntrancesService } from './services/entrances.service.js';
 
 @Module({
   imports: [TypeOrmModule.forFeature([EntranceEntity])],
-  providers: [WriteEntrancesService],
-  exports: [WriteEntrancesService],
+  providers: [EntrancesService],
+  exports: [EntrancesService],
 })
 export class EntrancesModule {}

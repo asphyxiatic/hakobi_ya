@@ -10,20 +10,20 @@ import { BaseEntity } from '../../common/entities/base.entity.js';
 import { UserEntity } from '../../users/entities/user.entity.js';
 import { HouseEntity } from '../../houses/entities/house.entity.js';
 
-const tableName = 'addresses';
+const tableName = 'streets';
 
 @Entity(tableName)
-export class AddressEntity extends BaseEntity {
+export class StreetEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: false, unique: true })
   name!: string;
 
   @Column({ name: 'owner_id', type: 'uuid', nullable: false })
   ownerId!: UserEntity['id'];
 
-  @OneToMany(() => HouseEntity, (house) => house.address)
+  @OneToMany(() => HouseEntity, (house) => house.street)
   houses!: Relation<HouseEntity[]>;
 
-  @ManyToOne(() => UserEntity, (user) => user.addresses, {
+  @ManyToOne(() => UserEntity, (user) => user.streets, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
