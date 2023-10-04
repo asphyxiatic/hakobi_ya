@@ -45,13 +45,13 @@ export class TokensService {
       });
 
       if (!tokenInDB) {
-        await this.tokensRepository.create(saveTokenPayload);
+        await this.tokensRepository.save(saveTokenPayload);
+      } else {
+        await this.tokensRepository.save({
+          id: tokenInDB.id,
+          value: hashedEncryptionRefreshToken,
+        });
       }
-
-      await this.tokensRepository.update(
-        { userId: userId, fingerprint: fingerprint },
-        { value: hashedEncryptionRefreshToken },
-      );
     } catch (error: any) {
       throw new InternalServerErrorException(
         '🚨 ошибка сохранения токена в базу данных!',

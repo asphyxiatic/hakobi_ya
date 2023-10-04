@@ -32,7 +32,7 @@ export class JwtToolsService {
 
     return {
       userId: decodeToken.sub,
-      email: decodeToken.email,
+      login: decodeToken.login,
     };
   }
 }

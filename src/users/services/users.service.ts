@@ -4,6 +4,7 @@ import { UserEntity } from '../entities/user.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserCredentials } from '../interfaces/user-credentials.interface.js';
+import { UserRole } from '../types/user-roles.js';
 
 @Injectable()
 export class UsersService {
@@ -15,13 +16,15 @@ export class UsersService {
   ) {}
 
   //-------------------------------------------------------------
-  public async create(credentials: UserCredentials): Promise<UserEntity> {
+  public async create(
+    createOptions: UserCredentials & { role: UserRole },
+  ): Promise<UserEntity> {
     const hashedPassword = bcrypt.hashSync(
-      credentials.password,
+      createOptions.password,
       this.saltRounds,
     );
     return this.usersRepository.save({
-      ...credentials,
+      ...createOptions,
       password: hashedPassword,
     });
   }
@@ -32,15 +35,31 @@ export class UsersService {
   }
 
   //-------------------------------------------------------------
-  public async findByEmail(email: string): Promise<UserEntity> {
-    return this.usersRepository.findOne({ where: { email: email } });
+  public async isAdmin(userId: string): Promise<boolean> {
+    const user = await this.findById(userId);
+
+    if (!user || user.role != 'admin') {
+      return false;
+    }
+
+    return true;
   }
 
   //-------------------------------------------------------------
+  public async findById(userId: string) {
+    return this.findOneUser({ id: userId });
+  }
+
+  // //-------------------------------------------------------------
+  public async findByLogin(login: string): Promise<UserEntity> {
+    return this.usersRepository.findOne({ where: { login: login } });
+  }
+
+  // -------------------------------------------------------------
   public async findUserForCredentials(
     credentials: UserCredentials,
   ): Promise<UserEntity> {
-    const user = await this.findByEmail(credentials.email);
+    const user = await this.findByLogin(credentials.login);
 
     if (!user) {
       return undefined;

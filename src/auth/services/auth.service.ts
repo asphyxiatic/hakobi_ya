@@ -1,8 +1,4 @@
-import {
-  BadGatewayException,
-  BadRequestException,
-  Injectable,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsersService } from '../../users/services/users.service.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
 import config from '../../config/config.js';
@@ -11,8 +7,11 @@ import { CreatePairTokens } from '../interfaces/create-pair-tokens.interface.js'
 import { TokensService } from '../../tokens/services/tokens.service.js';
 import { SignInDto } from '../dto/sign-in.dto.js';
 import { SignInResponseDto } from '../dto/sign-in-response.dto.js';
-import { SignUpDto } from '../dto/sign-up.dto.js';
-import { SignUpResponseDto } from '../dto/sign-up-response.dto.js';
+import { UserRole } from '../../users/types/user-roles.js';
+import generator from 'generate-password-ts';
+import { RegisterUserResponseDto } from '../dto/create-user-response.dto.js';
+import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
+import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
 
 @Injectable()
 export class AuthService {
@@ -24,33 +23,6 @@ export class AuthService {
     private readonly jwtToolsService: JwtToolsService,
     private readonly tokensService: TokensService,
   ) {}
-
-  //-------------------------------------------------------------------------
-  public async signUp(
-    credentials: SignUpDto,
-    fingerprint: string,
-  ): Promise<SignUpResponseDto> {
-    const user = await this.usersService.findByEmail(credentials.email);
-
-    if (user) {
-      throw new BadGatewayException('🚨 email уже занят!!!');
-    }
-
-    const newUser = await this.usersService.create(credentials);
-
-    const tokens = await this.createPairTokens(newUser.id, newUser.email);
-
-    await this.tokensService.saveRefreshToken(
-      newUser.id,
-      tokens.refreshToken,
-      fingerprint,
-    );
-
-    return {
-      user: newUser,
-      ...tokens,
-    };
-  }
 
   //-------------------------------------------------------------
   public async signIn(
@@ -65,7 +37,7 @@ export class AuthService {
       );
     }
 
-    const tokens = await this.createPairTokens(user.id, user.email);
+    const tokens = await this.createPairTokens(user.id, user.login);
 
     await this.tokensService.saveRefreshToken(
       user.id,
@@ -79,14 +51,52 @@ export class AuthService {
     };
   }
 
+  //-------------------------------------------------------------
+  public async createUserWithGeneratedPassword(
+    login: string,
+    role: UserRole,
+  ): Promise<RegisterUserResponseDto> {
+    const user = await this.usersService.findByLogin(login);
+
+    if (user) {
+      throw new BadRequestException('🚨 логин занят!');
+    }
+
+    const password = generator.generate({ length: 8, numbers: true });
+
+    await this.usersService.create({
+      login: login,
+      password: password,
+      role: role,
+    });
+
+    return { login, password };
+  }
+
+  //-------------------------------------------------------------
+  public async refreshTokens(
+    user: UserFromJwt,
+    fingerprint: string,
+  ): Promise<RefreshTokensResponseDto> {
+    const newTokens = await this.createPairTokens(user.id, user.login);
+
+    await this.tokensService.saveRefreshToken(
+      user.id,
+      newTokens.refreshToken,
+      fingerprint,
+    );
+
+    return newTokens;
+  }
+
   //-------------------------------------------------------------------------
   private async createPairTokens(
     userId: string,
-    email: string,
+    login: string,
   ): Promise<CreatePairTokens> {
     const tokenPayload: JwtTokenPayload = {
       sub: userId,
-      email: email,
+      login: login,
     };
 
     const accessToken = await this.jwtToolsService.createToken(
