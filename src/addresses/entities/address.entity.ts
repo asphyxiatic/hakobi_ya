@@ -8,13 +8,13 @@ import {
 } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity.js';
 import { UserEntity } from '../../users/entities/user.entity.js';
-import { HouseEntity } from '../../houses/house.entity.js';
+import { HouseEntity } from '../../houses/entities/house.entity.js';
 
 const tableName = 'addresses';
 
 @Entity(tableName)
 export class AddressEntity extends BaseEntity {
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', nullable: false, unique: true })
   name!: string;
 
   @Column({ name: 'owner_id', type: 'uuid', nullable: false })

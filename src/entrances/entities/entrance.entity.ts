@@ -1,6 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToOne, Relation } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity.js';
-import { HouseEntity } from '../../houses/house.entity.js';
+import { HouseEntity } from '../../houses/entities/house.entity.js';
 
 const tableName = 'entrances';
 
@@ -9,7 +9,7 @@ export class EntranceEntity extends BaseEntity {
   @Column({ name: 'number_entrance', type: 'integer', nullable: false })
   numberEntrance!: number;
 
-  @Column({ type: 'boolean', nullable: false })
+  @Column({ type: 'boolean', default: false, nullable: false })
   completed!: boolean;
 
   @Column({ name: 'house_id', type: 'uuid', nullable: false })

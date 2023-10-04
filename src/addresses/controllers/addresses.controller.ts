@@ -12,24 +12,36 @@ import { DeleteAddressesDto } from '../dto/delete-addresses.dto.js';
 export class AddressesController {
   constructor(private readonly writeAddressesService: WriteAddressesService) {}
 
-  @Post()
-  async create(
-    @Body() { name }: CreateAddressDto,
-    @GetCurrentUser() { id }: UserFromJwt,
-  ): Promise<AddressEntity> {
-    return this.writeAddressesService.create(id, name);
-  }
+  // @Post()
+  // async create(
+  //   @Body() { name }: CreateAddressDto,
+  //   @GetCurrentUser() { id }: UserFromJwt,
+  // ): Promise<AddressEntity> {
+  //   return this.writeAddressesService.create(id, name);
+  // }
 
-  @Patch(':addressId')
-  async update(
-    @Param() { addressId }: RequestParams,
-    @Body() { name }: UpdateAddressDto,
-  ): Promise<AddressEntity> {
-    return this.writeAddressesService.update(addressId, name);
-  }
+  // @Patch(':addressId')
+  // async update(
+  //   @Param() { addressId }: RequestParams,
+  //   @Body() { name }: UpdateAddressDto,
+  // ): Promise<AddressEntity> {
+  //   return this.writeAddressesService.update(addressId, name);
+  // }
 
-  @Delete()
-  async delete(@Body() { addressIds }: DeleteAddressesDto): Promise<void> {
-    return this.writeAddressesService.deleteMany(addressIds);
-  }
+  // @Delete()
+  // async delete(@Body() { addressIds }: DeleteAddressesDto): Promise<void> {
+  //   return this.writeAddressesService.deleteMany(addressIds);
+  // }
+
+  // @Post()
+  // async createHouse() {}
+
+  // @Patch()
+  // async updateHouse() {}
+
+  // @Delete()
+  // async deleteHouses() {}
+
+  // @Post()
+  // async activeEntrance() {}
 }
