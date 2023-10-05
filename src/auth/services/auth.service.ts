@@ -12,6 +12,7 @@ import { RegisterUserResponseDto } from '../dto/create-user-response.dto.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
 import { Role } from '../../users/enums/role.enum.js';
+import { use } from 'passport';
 
 @Injectable()
 export class AuthService {
@@ -39,7 +40,15 @@ export class AuthService {
       );
     }
 
-    const tokens = await this.createPairTokens(user.id, user.login);
+    const userRoles = user.roles;
+
+    let tokens;
+
+    if (userRoles.includes(Role.admin)) {
+      tokens = await this.createPairTokens(user.id, userRoles, user.email);
+    } else {
+      tokens = await this.createPairTokens(user.id, userRoles, user.login);
+    }
 
     await this.tokensService.saveToken({
       userId: user.id,
@@ -80,7 +89,13 @@ export class AuthService {
     user: UserFromJwt,
     fingerprint: string,
   ): Promise<RefreshTokensResponseDto> {
-    const newTokens = await this.createPairTokens(user.id, user.login);
+    let newTokens;
+
+    if (user.roles.includes(Role.admin)) {
+      newTokens = await this.createPairTokens(user.id, user.roles, user.email);
+    } else {
+      newTokens = await this.createPairTokens(user.id, user.roles, user.login);
+    }
 
     await this.tokensService.saveToken({
       userId: user.id,
@@ -94,11 +109,15 @@ export class AuthService {
   //-------------------------------------------------------------------------
   private async createPairTokens(
     userId: string,
-    login: string,
+    roles: Role[],
+    login?: string,
+    email?: string,
   ): Promise<CreatePairTokensResponse> {
     const tokenPayload: JwtTokenPayload = {
       sub: userId,
       login: login,
+      email: email,
+      roles: roles,
     };
 
     const accessToken = await this.jwtToolsService.createToken(

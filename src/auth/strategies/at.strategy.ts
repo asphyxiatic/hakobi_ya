@@ -21,7 +21,9 @@ export class AtStrategy extends PassportStrategy(Strategy, 'at') {
 
     const userFromJwt: UserFromJwt = {
       id: payload.sub,
-      login: payload.login,
+      login: payload?.login,
+      email: payload?.email,
+      roles: payload.roles,
     };
 
     if (!isUserExist) {

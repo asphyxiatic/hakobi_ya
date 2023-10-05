@@ -10,13 +10,15 @@ import { RtGuard } from '../guards/rt.guard.js';
 import { GetCurrentUser } from '../../common/decorators/get-current-user.decorator.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
+import { RoleGuard } from '../../users/guards/role.guard.js';
+import { Role } from '../../users/enums/role.enum.js';
 
-@SkipAuth()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @UseGuards(RoleGuard(Role.admin))
   async register(
     @Body() { login, roles }: RegisterUserDto,
   ): Promise<RegisterUserResponseDto> {
@@ -24,6 +26,7 @@ export class AuthController {
   }
 
   @Post('sign-in')
+  @SkipAuth()
   async signIn(
     @Body() credentials: SignInDto,
     @GetFingerprints() fingerprint: string,
@@ -33,6 +36,7 @@ export class AuthController {
 
   @Post('refresh')
   @UseGuards(RtGuard)
+  @SkipAuth()
   async refreshTokens(
     @GetCurrentUser() user: UserFromJwt,
     @GetFingerprints() fingerprint: string,
