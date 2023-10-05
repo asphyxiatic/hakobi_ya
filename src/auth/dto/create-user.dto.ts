@@ -1,5 +1,4 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { RoleType } from '../../users/types/role.type.js';
 import { Role } from '../../users/enums/role.enum.js';
 
 export class RegisterUserDto {
@@ -9,5 +8,5 @@ export class RegisterUserDto {
 
   @IsEnum(Role)
   @IsOptional()
-  role!: RoleType;
+  roles!: Role[];
 }

@@ -1,6 +1,6 @@
-import { RoleType } from '../types/role.type.js';
+import { Role } from '../enums/role.enum.js';
 import { UserCredentials } from './user-credentials.interface.js';
 
 export interface CreateUserOptions extends UserCredentials {
-  role: RoleType;
+  roles: Role[];
 }

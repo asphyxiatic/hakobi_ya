@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { TokenEntity } from '../entities/token.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EncryptionService } from '../../encryption/services/encryption.service.js';
@@ -19,16 +19,16 @@ export class TokensService {
 
   //-----------------------------------------------------------
   public async findOne(
-    whereOptions: Partial<TokenEntity>,
+    findOptions: FindOptionsWhere<TokenEntity>,
   ): Promise<TokenEntity> {
-    return this.tokensRepository.findOne({ where: whereOptions });
+    return this.tokensRepository.findOne({ where: findOptions });
   }
 
   //-----------------------------------------------------------
   public async find(
-    whereOptions: Partial<TokenEntity>,
+    findOptions: FindOptionsWhere<TokenEntity>,
   ): Promise<TokenEntity[]> {
-    return this.tokensRepository.find({ where: whereOptions });
+    return this.tokensRepository.find({ where: findOptions });
   }
 
   //-----------------------------------------------------------

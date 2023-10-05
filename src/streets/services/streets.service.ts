@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StreetEntity } from '../entities/street.entity.js';
 import { CreateStreetOptions } from '../interfaces/create-street-options.interface.js';
@@ -26,9 +26,9 @@ export class StreetsService {
 
   // ----------------------------------------------------------------------
   public async findOne(
-    whereOptions: Partial<StreetEntity>,
+    findOptions: FindOptionsWhere<StreetEntity>,
   ): Promise<StreetEntity> {
-    return this.streetsRepository.findOne({ where: whereOptions });
+    return this.streetsRepository.findOne({ where: findOptions });
   }
 
   // ----------------------------------------------------------------------

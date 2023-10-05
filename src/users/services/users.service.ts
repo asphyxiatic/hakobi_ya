@@ -4,7 +4,7 @@ import { UserCredentials } from '../interfaces/user-credentials.interface.js';
 import { CreateUserOptions } from '../interfaces/create-user-options.interface.js';
 import { UserEntity } from '../entities/user.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { DeleteUsersOptions } from '../interfaces/delete-user-options.interface.js';
 
 @Injectable()
@@ -17,8 +17,8 @@ export class UsersService {
   ) {}
 
   //-------------------------------------------------------------
-  public async findOne(whereOptions: Partial<UserEntity>) {
-    return this.usersRepository.findOne({ where: whereOptions });
+  public async findOne(findOptions: FindOptionsWhere<UserEntity>) {
+    return this.usersRepository.findOne({ where: findOptions });
   }
 
   //-------------------------------------------------------------

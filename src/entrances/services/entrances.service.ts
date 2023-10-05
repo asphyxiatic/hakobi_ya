@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { EntranceEntity } from '../entities/entrance.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateEntranceOptions } from '../interfaces/create-entrance-options.interface.js';
@@ -15,9 +15,9 @@ export class EntrancesService {
 
   // ---------------------------------------------------------------
   public async findOne(
-    whereOptions: Partial<EntranceEntity>,
+    findOptions: FindOptionsWhere<EntranceEntity>,
   ): Promise<EntranceEntity> {
-    return this.entrancesRepository.findOne({ where: whereOptions });
+    return this.entrancesRepository.findOne({ where: findOptions });
   }
 
   // ---------------------------------------------------------------

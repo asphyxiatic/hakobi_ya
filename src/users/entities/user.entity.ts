@@ -3,7 +3,6 @@ import { BaseEntity } from '../../common/entities/base.entity.js';
 import { TokenEntity } from '../../tokens/entities/token.entity.js';
 import { StreetEntity } from '../../streets/entities/street.entity.js';
 import { Role } from '../enums/role.enum.js';
-import { RoleType } from '../types/role.type.js';
 
 const tableName = 'users';
 
@@ -24,9 +23,10 @@ export class UserEntity extends BaseEntity {
   @Column({
     type: 'enum',
     enum: Role,
-    default: Role.user,
+    array: true,
+    default: [Role.user],
   })
-  role!: RoleType;
+  roles!: Role[];
 
   @OneToMany(() => TokenEntity, (token) => token.user)
   tokens!: Relation<TokenEntity[]>;
