@@ -11,6 +11,7 @@ import passwordGenerator from 'generate-password-ts';
 import { RegisterUserResponseDto } from '../dto/create-user-response.dto.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
+import { RoleType } from '../../users/types/role.type.js';
 
 @Injectable()
 export class AuthService {
@@ -55,6 +56,7 @@ export class AuthService {
   //-------------------------------------------------------------
   public async createUserWithGeneratedPassword(
     login: string,
+    role: RoleType,
   ): Promise<RegisterUserResponseDto> {
     const user = await this.usersService.findByLogin(login);
 
@@ -67,6 +69,7 @@ export class AuthService {
     await this.usersService.create({
       login: login,
       password: password,
+      role: role,
     });
 
     return { login, password };

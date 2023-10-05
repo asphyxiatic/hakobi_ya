@@ -18,9 +18,9 @@ export class AuthController {
 
   @Post('register')
   async register(
-    @Body() { login }: RegisterUserDto,
+    @Body() { login, role }: RegisterUserDto,
   ): Promise<RegisterUserResponseDto> {
-    return this.authService.createUserWithGeneratedPassword(login);
+    return this.authService.createUserWithGeneratedPassword(login, role);
   }
 
   @Post('sign-in')
