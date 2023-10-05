@@ -1,6 +1,6 @@
 import { HouseEntity } from '../../houses/entities/house.entity.js';
 
-export interface CreateEntrance {
+export interface UpdateEntranceOptions {
   houseId: HouseEntity['id'];
-  quantity: number;
+  updatedQuantity: number;
 }

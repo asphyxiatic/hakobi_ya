@@ -6,26 +6,24 @@ import { SignInResponseDto } from '../dto/sign-in-response.dto.js';
 import { SkipAuth } from '../decorators/skip-auth.decorator.js';
 import { RegisterUserDto } from '../dto/create-user.dto.js';
 import { RegisterUserResponseDto } from '../dto/create-user-response.dto.js';
-import { AdminGuard } from '../../users/guards/admin.guard.js';
 import { RtGuard } from '../guards/rt.guard.js';
-import { GetCurrentUser } from '../decorators/get-current-user.decorator.js';
+import { GetCurrentUser } from '../../common/decorators/get-current-user.decorator.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
 
+@SkipAuth()
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  @UseGuards(AdminGuard)
   async register(
-    @Body() { login, role }: RegisterUserDto,
+    @Body() { login }: RegisterUserDto,
   ): Promise<RegisterUserResponseDto> {
-    return this.authService.createUserWithGeneratedPassword(login, role);
+    return this.authService.createUserWithGeneratedPassword(login);
   }
 
   @Post('sign-in')
-  @SkipAuth()
   async signIn(
     @Body() credentials: SignInDto,
     @GetFingerprints() fingerprint: string,
@@ -34,7 +32,6 @@ export class AuthController {
   }
 
   @Post('refresh')
-  @SkipAuth()
   @UseGuards(RtGuard)
   async refreshTokens(
     @GetCurrentUser() user: UserFromJwt,

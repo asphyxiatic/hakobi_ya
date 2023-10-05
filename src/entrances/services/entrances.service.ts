@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { EntranceEntity } from '../entities/entrance.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateEntrance } from '../interfaces/create-entrance.interface.js';
-import { UpdateEntrance } from '../interfaces/update-entrance.interface.js';
-import { CompleteEntrance } from '../interfaces/complete-entrance.interface.js';
+import { CreateEntranceOptions } from '../interfaces/create-entrance-options.interface.js';
+import { UpdateEntranceOptions } from '../interfaces/update-entrance-options.interface.js';
+import { CompleteEntranceOptions } from '../interfaces/complete-entrance-options.interface.js';
 
 @Injectable()
 export class EntrancesService {
@@ -14,10 +14,17 @@ export class EntrancesService {
   ) {}
 
   // ---------------------------------------------------------------
+  public async findOne(
+    whereOptions: Partial<EntranceEntity>,
+  ): Promise<EntranceEntity> {
+    return this.entrancesRepository.findOne({ where: whereOptions });
+  }
+
+  // ---------------------------------------------------------------
   public async createEntrancesForHouse({
     houseId,
     quantity,
-  }: CreateEntrance): Promise<EntranceEntity[]> {
+  }: CreateEntranceOptions): Promise<EntranceEntity[]> {
     const entrances: EntranceEntity[] = [];
 
     for (let i = 1; i <= quantity; i++) {
@@ -35,20 +42,22 @@ export class EntrancesService {
   // ---------------------------------------------------------------
   public async updateEntrancesForHouse({
     houseId,
-    quantity,
-  }: UpdateEntrance): Promise<EntranceEntity[]> {
+    updatedQuantity,
+  }: UpdateEntranceOptions): Promise<EntranceEntity[]> {
     const countEntrancesForHouse = await this.entrancesRepository.count({
       where: { houseId: houseId },
     });
 
-    if (countEntrancesForHouse > quantity) {
+    if (countEntrancesForHouse > updatedQuantity) {
       await this.entrancesRepository
         .createQueryBuilder('entrance')
         .delete()
-        .where('entrance.number_entrance > :quantity', { quantity: quantity })
+        .where('entrance.number_entrance > :quantity', {
+          quantity: updatedQuantity,
+        })
         .execute();
-    } else if (countEntrancesForHouse < quantity) {
-      for (let i = countEntrancesForHouse + 1; i <= quantity; i++) {
+    } else if (countEntrancesForHouse < updatedQuantity) {
+      for (let i = countEntrancesForHouse + 1; i <= updatedQuantity; i++) {
         await this.entrancesRepository.save({
           houseId: houseId,
           numberEntrance: i,
@@ -68,9 +77,10 @@ export class EntrancesService {
     houseId,
     numberEntrance,
     complete,
-  }: CompleteEntrance): Promise<EntranceEntity> {
-    const entrance = await this.entrancesRepository.findOne({
-      where: { houseId: houseId, numberEntrance: numberEntrance },
+  }: CompleteEntranceOptions): Promise<EntranceEntity> {
+    const entrance = await this.findOne({
+      houseId: houseId,
+      numberEntrance: numberEntrance,
     });
 
     if (!entrance) {

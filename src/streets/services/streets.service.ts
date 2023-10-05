@@ -1,7 +1,14 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StreetEntity } from '../entities/street.entity.js';
+import { CreateStreetOptions } from '../interfaces/create-street-options.interface.js';
+import { UpdateStreetOptions } from '../interfaces/update-street-options.interface.js';
+import { DeleteStreetsOptions } from '../interfaces/delete-street-options.interface.js';
 
 @Injectable()
 export class StreetsService {
@@ -11,38 +18,51 @@ export class StreetsService {
   ) {}
 
   // ----------------------------------------------------------------------
-  public async getAllStreets(): Promise<StreetEntity[]> {
+  public async getFullStreetInformation(): Promise<StreetEntity[]> {
     return this.streetsRepository.find({
       relations: ['houses', 'houses.entrances'],
     });
   }
 
   // ----------------------------------------------------------------------
+  public async findOne(
+    whereOptions: Partial<StreetEntity>,
+  ): Promise<StreetEntity> {
+    return this.streetsRepository.findOne({ where: whereOptions });
+  }
+
+  // ----------------------------------------------------------------------
   public async create(
-    ownerId: StreetEntity['ownerId'],
-    name: StreetEntity['name'],
+    createOptions: CreateStreetOptions,
   ): Promise<StreetEntity> {
     try {
-      return this.streetsRepository.save({ ownerId: ownerId, name: name });
+      return this.streetsRepository.save(createOptions);
     } catch (error: any) {
-      throw new InternalServerErrorException(`🚨 ${error}`);
+      throw new InternalServerErrorException(
+        `🚨 ошибка сохранения улицы в базу данных!`,
+      );
     }
   }
 
   // ----------------------------------------------------------------------
   public async update(
-    StreetId: StreetEntity['id'],
-    name: StreetEntity['name'],
+    updateOptions: UpdateStreetOptions,
   ): Promise<StreetEntity> {
-    return this.streetsRepository.save({ id: StreetId, name: name });
+    const street = this.findOne({ id: updateOptions.streetId });
+
+    if (!street) {
+      throw new NotFoundException('🚨 не найдена улица!');
+    }
+
+    return this.streetsRepository.save(updateOptions);
   }
 
   // ----------------------------------------------------------------------
-  public async deleteMany(StreetIds: string[]): Promise<void> {
+  public async delete({ streetIds }: DeleteStreetsOptions): Promise<void> {
     try {
-      await this.streetsRepository.delete(StreetIds);
+      await this.streetsRepository.delete(streetIds);
     } catch (error: any) {
-      throw new InternalServerErrorException('🚨 не удалось удалить адрес!');
+      throw new InternalServerErrorException('🚨 не удалось удалить улицу!');
     }
   }
 }

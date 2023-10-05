@@ -1,5 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
-import { IDecodeTokenResult } from '../interfaces/decode-token-result.interface.js';
+import { DecodeTokenResult } from '../interfaces/decode-token-result.interface.js';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { JwtTokenPayload } from '../interfaces/token-payload.interface.js';
 
@@ -16,6 +16,7 @@ export class JwtToolsService {
       secret: secret,
       expiresIn: expires,
     });
+
     return token;
   }
 
@@ -23,15 +24,15 @@ export class JwtToolsService {
   public async decodeToken(
     token: string,
     secret: string,
-  ): Promise<IDecodeTokenResult> {
+  ): Promise<DecodeTokenResult> {
     const decodeToken: JwtTokenPayload = await this.jwtService
       .verifyAsync(token, { secret: secret })
       .catch((error: any) => {
-        throw new InternalServerErrorException('🚨 token is invalid!');
+        throw new InternalServerErrorException('🚨 недопустимый токен!');
       });
 
     return {
-      userId: decodeToken.sub,
+      id: decodeToken.sub,
       login: decodeToken.login,
     };
   }

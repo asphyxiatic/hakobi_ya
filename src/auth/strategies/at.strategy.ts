@@ -17,12 +17,17 @@ export class AtStrategy extends PassportStrategy(Strategy, 'at') {
   }
 
   async validate(payload: JwtTokenPayload): Promise<UserFromJwt> {
-    const user = await this.userService.findById(payload.sub);
+    const isUserExist = await this.userService.isUserExist(payload.sub);
 
-    if (!user) {
+    const userFromJwt: UserFromJwt = {
+      id: payload.sub,
+      login: payload.login,
+    };
+
+    if (!isUserExist) {
       throw new UnauthorizedException();
     }
 
-    return { id: payload.sub, login: payload.login };
+    return userFromJwt;
   }
 }

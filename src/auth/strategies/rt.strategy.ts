@@ -26,25 +26,30 @@ export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
     request: Request,
     payload: JwtTokenPayload,
   ): Promise<UserFromJwt> {
-    const user = await this.userService.findById(payload.sub);
+    const isUserExist = await this.userService.isUserExist(payload.sub);
 
-    if (!user) {
+    if (!isUserExist) {
       throw new UnauthorizedException();
     }
+
+    const userFromJwt: UserFromJwt = {
+      id: payload.sub,
+      login: payload.login,
+    };
 
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request);
     const fingerprint = request['fingerprint'];
 
-    const isValidRefreshToken = await this.tokensService.validateRefreshToken(
-      user.id,
-      token,
-      fingerprint,
-    );
+    const isValidRefreshToken = await this.tokensService.validateToken({
+      userId: userFromJwt.id,
+      value: token,
+      fingerprint: fingerprint,
+    });
 
     if (!isValidRefreshToken) {
       throw new UnauthorizedException();
     }
 
-    return { id: payload.sub, login: payload.login };
+    return userFromJwt;
   }
 }

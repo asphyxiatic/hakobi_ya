@@ -4,6 +4,8 @@ import { TokenEntity } from '../entities/token.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EncryptionService } from '../../encryption/services/encryption.service.js';
 import * as bcrypt from 'bcrypt';
+import { SaveTokenOptions } from '../interfaces/save-token-options.interface.js';
+import { ValidateTokenOptions } from '../interfaces/validate-token-options.interface.js';
 
 @Injectable()
 export class TokensService {
@@ -15,41 +17,59 @@ export class TokensService {
     private readonly encryptionService: EncryptionService,
   ) {}
 
-  //-------------------------------------------------------------
-  public async saveRefreshToken(
+  //-----------------------------------------------------------
+  public async findOne(
+    whereOptions: Partial<TokenEntity>,
+  ): Promise<TokenEntity> {
+    return this.tokensRepository.findOne({ where: whereOptions });
+  }
+
+  //-----------------------------------------------------------
+  public async find(
+    whereOptions: Partial<TokenEntity>,
+  ): Promise<TokenEntity[]> {
+    return this.tokensRepository.find({ where: whereOptions });
+  }
+
+  //-----------------------------------------------------------
+  public async getTokenForUserDevice(
     userId: string,
-    refreshToken: string,
-    fingerprint: string,
-  ): Promise<void> {
+    fingerprint: TokenEntity['fingerprint'],
+  ): Promise<TokenEntity> {
+    return this.findOne({ userId, fingerprint });
+  }
+
+  //-----------------------------------------------------------
+  public async getManyTokensForUserDevice(
+    userId: string,
+    fingerprint: TokenEntity['fingerprint'],
+  ): Promise<TokenEntity[]> {
+    return this.find({ userId, fingerprint });
+  }
+
+  //-------------------------------------------------------------
+  public async saveToken(saveOptions: SaveTokenOptions): Promise<void> {
     try {
-      const encryptionRefreshToken = await this.encryptionService.encrypt(
-        refreshToken,
+      const encryptionToken = await this.encryptionService.encrypt(
+        saveOptions.value,
       );
 
-      const hashedEncryptionRefreshToken = bcrypt.hashSync(
-        encryptionRefreshToken,
+      const hashedEncryptionToken = bcrypt.hashSync(
+        encryptionToken,
         this.saltRounds,
       );
 
-      const saveTokenPayload: Partial<TokenEntity> = {
-        userId: userId,
-        value: hashedEncryptionRefreshToken,
-        fingerprint: fingerprint,
-      };
+      const userDeviceToken = await this.getTokenForUserDevice(
+        saveOptions.userId,
+        saveOptions.fingerprint,
+      );
 
-      const tokenInDB = await this.tokensRepository.findOne({
-        where: {
-          userId,
-          fingerprint,
-        },
-      });
-
-      if (!tokenInDB) {
-        await this.tokensRepository.save(saveTokenPayload);
+      if (!userDeviceToken) {
+        await this.tokensRepository.save(saveOptions);
       } else {
         await this.tokensRepository.save({
-          id: tokenInDB.id,
-          value: hashedEncryptionRefreshToken,
+          id: userDeviceToken.id,
+          value: hashedEncryptionToken,
         });
       }
     } catch (error: any) {
@@ -60,25 +80,23 @@ export class TokensService {
   }
 
   //-------------------------------------------------------------
-  public async validateRefreshToken(
-    userId: string,
-    refreshToken: string,
-    fingerprint: string,
-  ): Promise<boolean> {
-    const tokens = await this.tokensRepository.find({ where: { userId } });
-
-    const encryptRefreshToken = await this.encryptionService.encrypt(
-      refreshToken,
+  public async validateToken({
+    userId,
+    value,
+    fingerprint,
+  }: ValidateTokenOptions): Promise<boolean> {
+    const userDeviceTokens = await this.getManyTokensForUserDevice(
+      userId,
+      fingerprint,
     );
 
-    const extractTokenFromDB = tokens.find((token) => {
-      return (
-        fingerprint === token.fingerprint &&
-        bcrypt.compareSync(encryptRefreshToken, token.value)
-      );
+    const encryptToken = await this.encryptionService.encrypt(value);
+
+    const validToken = userDeviceTokens.find((token) => {
+      return bcrypt.compareSync(encryptToken, token.value);
     });
 
-    if (!extractTokenFromDB) {
+    if (!validToken) {
       return false;
     }
 

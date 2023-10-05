@@ -1,4 +1,4 @@
-export interface IDecodeTokenResult {
-  userId: string;
+export interface DecodeTokenResult {
+  id: string;
   login: string;
 }

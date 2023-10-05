@@ -3,12 +3,11 @@ import { UsersService } from '../../users/services/users.service.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
 import config from '../../config/config.js';
 import { JwtToolsService } from '../../jwt/services/jwt-tools.service.js';
-import { CreatePairTokens } from '../interfaces/create-pair-tokens.interface.js';
+import { CreatePairTokensResponse } from '../interfaces/create-pair-tokens-response.interface.js';
 import { TokensService } from '../../tokens/services/tokens.service.js';
 import { SignInDto } from '../dto/sign-in.dto.js';
 import { SignInResponseDto } from '../dto/sign-in-response.dto.js';
-import { UserRole } from '../../users/types/user-roles.js';
-import generator from 'generate-password-ts';
+import passwordGenerator from 'generate-password-ts';
 import { RegisterUserResponseDto } from '../dto/create-user-response.dto.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
@@ -17,6 +16,8 @@ import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js'
 export class AuthService {
   private readonly JWT_ACCESS_SECRET = config.JWT_ACCESS_SECRET_KEY;
   private readonly JWT_REFRESH_SECRET = config.JWT_REFRESH_SECRET_KEY;
+  private readonly JWT_ACCESS_EXPIRES = '5m';
+  private readonly JWT_REFRESH_EXPIRES = '60d';
 
   constructor(
     private readonly usersService: UsersService,
@@ -39,11 +40,11 @@ export class AuthService {
 
     const tokens = await this.createPairTokens(user.id, user.login);
 
-    await this.tokensService.saveRefreshToken(
-      user.id,
-      tokens.refreshToken,
-      fingerprint,
-    );
+    await this.tokensService.saveToken({
+      userId: user.id,
+      value: tokens.refreshToken,
+      fingerprint: fingerprint,
+    });
 
     return {
       user: user,
@@ -54,7 +55,6 @@ export class AuthService {
   //-------------------------------------------------------------
   public async createUserWithGeneratedPassword(
     login: string,
-    role: UserRole,
   ): Promise<RegisterUserResponseDto> {
     const user = await this.usersService.findByLogin(login);
 
@@ -62,12 +62,11 @@ export class AuthService {
       throw new BadRequestException('🚨 логин занят!');
     }
 
-    const password = generator.generate({ length: 8, numbers: true });
+    const password = passwordGenerator.generate({ length: 8, numbers: true });
 
     await this.usersService.create({
       login: login,
       password: password,
-      role: role,
     });
 
     return { login, password };
@@ -80,11 +79,11 @@ export class AuthService {
   ): Promise<RefreshTokensResponseDto> {
     const newTokens = await this.createPairTokens(user.id, user.login);
 
-    await this.tokensService.saveRefreshToken(
-      user.id,
-      newTokens.refreshToken,
-      fingerprint,
-    );
+    await this.tokensService.saveToken({
+      userId: user.id,
+      value: newTokens.refreshToken,
+      fingerprint: fingerprint,
+    });
 
     return newTokens;
   }
@@ -93,7 +92,7 @@ export class AuthService {
   private async createPairTokens(
     userId: string,
     login: string,
-  ): Promise<CreatePairTokens> {
+  ): Promise<CreatePairTokensResponse> {
     const tokenPayload: JwtTokenPayload = {
       sub: userId,
       login: login,
@@ -102,13 +101,13 @@ export class AuthService {
     const accessToken = await this.jwtToolsService.createToken(
       tokenPayload,
       this.JWT_ACCESS_SECRET,
-      '5m',
+      this.JWT_ACCESS_EXPIRES,
     );
 
     const refreshToken = await this.jwtToolsService.createToken(
       tokenPayload,
       this.JWT_REFRESH_SECRET,
-      '60d',
+      this.JWT_REFRESH_EXPIRES,
     );
 
     return { accessToken, refreshToken };

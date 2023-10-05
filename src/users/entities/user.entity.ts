@@ -1,6 +1,5 @@
 import { Column, Entity, OneToMany, Relation } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity.js';
-import { UserRole, userRoles } from '../types/user-roles.js';
 import { TokenEntity } from '../../tokens/entities/token.entity.js';
 import { StreetEntity } from '../../streets/entities/street.entity.js';
 
@@ -14,14 +13,8 @@ export class UserEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: false })
   password!: string;
 
-  @Column({
-    name: 'role',
-    type: 'enum',
-    enum: userRoles,
-    default: 'regular' as UserRole,
-    nullable: false,
-  })
-  role!: string;
+  @Column({ type: 'boolean', default: true, nullable: false })
+  active!: boolean;
 
   @OneToMany(() => TokenEntity, (token) => token.user)
   tokens!: Relation<TokenEntity[]>;

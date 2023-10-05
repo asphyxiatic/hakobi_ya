@@ -14,8 +14,13 @@ const tableName = 'streets';
 
 @Entity(tableName)
 export class StreetEntity extends BaseEntity {
-  @Column({ type: 'varchar', nullable: false, unique: true })
-  name!: string;
+  @Column({
+    name: 'name_street',
+    type: 'varchar',
+    nullable: false,
+    unique: true,
+  })
+  nameStreet!: string;
 
   @Column({ name: 'owner_id', type: 'uuid', nullable: false })
   ownerId!: UserEntity['id'];

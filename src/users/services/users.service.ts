@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { UserEntity } from '../entities/user.entity.js';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UserCredentials } from '../interfaces/user-credentials.interface.js';
-import { UserRole } from '../types/user-roles.js';
+import { CreateUserOptions } from '../interfaces/create-user-options.interface.js';
+import { UserEntity } from '../entities/user.entity.js';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { DeleteUsersOptions } from '../interfaces/delete-user-options.interface.js';
 
 @Injectable()
 export class UsersService {
@@ -16,43 +17,50 @@ export class UsersService {
   ) {}
 
   //-------------------------------------------------------------
-  public async create(
-    createOptions: UserCredentials & { role: UserRole },
-  ): Promise<UserEntity> {
-    const hashedPassword = bcrypt.hashSync(
-      createOptions.password,
-      this.saltRounds,
-    );
-    return this.usersRepository.save({
-      ...createOptions,
-      password: hashedPassword,
-    });
-  }
-
-  //-------------------------------------------------------------
-  public async findOneUser(whereOptions: Partial<UserEntity>) {
+  public async findOne(whereOptions: Partial<UserEntity>) {
     return this.usersRepository.findOne({ where: whereOptions });
   }
 
   //-------------------------------------------------------------
-  public async isAdmin(userId: string): Promise<boolean> {
-    const user = await this.findById(userId);
-
-    if (!user || user.role != 'admin') {
-      return false;
-    }
-
-    return true;
+  public async findById(userId: UserEntity['id']) {
+    return this.findOne({ id: userId });
   }
 
   //-------------------------------------------------------------
-  public async findById(userId: string) {
-    return this.findOneUser({ id: userId });
+  public async findByLogin(login: UserEntity['id']): Promise<UserEntity> {
+    return this.usersRepository.findOne({ where: { login: login } });
   }
 
-  // //-------------------------------------------------------------
-  public async findByLogin(login: string): Promise<UserEntity> {
-    return this.usersRepository.findOne({ where: { login: login } });
+  //-------------------------------------------------------------
+  public async create(createOptions: CreateUserOptions): Promise<UserEntity> {
+    try {
+      const hashedPassword = bcrypt.hashSync(
+        createOptions.password,
+        this.saltRounds,
+      );
+
+      const newUser = await this.usersRepository.save({
+        ...createOptions,
+        password: hashedPassword,
+      });
+
+      return newUser;
+    } catch (error: any) {
+      throw new InternalServerErrorException(
+        '🚨 ошибка сохранения пользователя в базу данных!',
+      );
+    }
+  }
+
+  // -------------------------------------------------------------
+  public async delete({ userIds }: DeleteUsersOptions): Promise<void> {
+    try {
+      await this.usersRepository.delete(userIds);
+    } catch (error: any) {
+      throw new InternalServerErrorException(
+        '🚨 не удалось удалить пользователей!',
+      );
+    }
   }
 
   // -------------------------------------------------------------
@@ -75,5 +83,20 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  // -------------------------------------------------------------
+  public async isUserExist(userId: UserEntity['id']): Promise<boolean> {
+    return !!this.findById(userId);
+  }
+
+  // -------------------------------------------------------------
+  public async enableActivityUser(userId: UserEntity['id']): Promise<void> {
+    await this.usersRepository.save({ id: userId, active: true });
+  }
+
+  // -------------------------------------------------------------
+  public async disableActivityUser(userId: UserEntity['id']): Promise<void> {
+    await this.usersRepository.save({ id: userId, active: false });
   }
 }

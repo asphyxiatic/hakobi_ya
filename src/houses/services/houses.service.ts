@@ -7,9 +7,9 @@ import { Repository } from 'typeorm';
 import { HouseEntity } from '../entities/house.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntrancesService } from '../../entrances/services/entrances.service.js';
-import { CreateHouse } from '../interfaces/create-house.interface.js';
-import { UpdateHouse } from '../interfaces/update-house.interface.js';
-import { DeleteHouse } from '../interfaces/delete-house.interface.js';
+import { CreateHouseOptions } from '../interfaces/create-house-options.interface.js';
+import { UpdateHouseOptions } from '../interfaces/update-house-options.interface.js';
+import { DeleteHousesOptions } from '../interfaces/delete-house-options.interface.js';
 
 @Injectable()
 export class HousesService {
@@ -24,7 +24,7 @@ export class HousesService {
     streetId,
     houseName,
     quantityEntrances,
-  }: CreateHouse): Promise<HouseEntity> {
+  }: CreateHouseOptions): Promise<HouseEntity> {
     const newHouse = await this.housesRepository.save({
       streetId: streetId,
       houseName: houseName,
@@ -43,7 +43,7 @@ export class HousesService {
     houseId,
     houseName,
     quantityEntrances,
-  }: UpdateHouse): Promise<HouseEntity> {
+  }: UpdateHouseOptions): Promise<HouseEntity> {
     const house = await this.housesRepository.findOne({
       where: { id: houseId },
       relations: { entrances: true },
@@ -65,11 +65,10 @@ export class HousesService {
     let updateEntrances = house.entrances;
 
     if (quantityEntrances) {
-      updateEntrances =
-        await this.entrancesService.updateEntrancesForHouse({
-          houseId: houseId,
-          quantity: quantityEntrances,
-        });
+      updateEntrances = await this.entrancesService.updateEntrancesForHouse({
+        houseId: houseId,
+        updatedQuantity: quantityEntrances,
+      });
     }
 
     return {
@@ -79,11 +78,11 @@ export class HousesService {
   }
 
   //--------------------------------------------------------------------------
-  public async delete({ houseIds }: DeleteHouse): Promise<void> {
+  public async delete({ houseIds }: DeleteHousesOptions): Promise<void> {
     try {
       await this.housesRepository.delete(houseIds);
     } catch (error: any) {
-      throw new InternalServerErrorException('🚨 не удалось удалить дом!');
+      throw new InternalServerErrorException('🚨 не удалось удалить дома!');
     }
   }
 }
