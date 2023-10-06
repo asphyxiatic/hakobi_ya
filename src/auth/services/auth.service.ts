@@ -12,13 +12,12 @@ import { RegisterUserResponseDto } from '../dto/create-user-response.dto.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
 import { Role } from '../../users/enums/role.enum.js';
-import { use } from 'passport';
 
 @Injectable()
 export class AuthService {
   private readonly JWT_ACCESS_SECRET = config.JWT_ACCESS_SECRET_KEY;
   private readonly JWT_REFRESH_SECRET = config.JWT_REFRESH_SECRET_KEY;
-  private readonly JWT_ACCESS_EXPIRES = '5m';
+  private readonly JWT_ACCESS_EXPIRES = '60d';
   private readonly JWT_REFRESH_EXPIRES = '60d';
 
   constructor(
@@ -40,15 +39,7 @@ export class AuthService {
       );
     }
 
-    const userRoles = user.roles;
-
-    let tokens;
-
-    if (userRoles.includes(Role.admin)) {
-      tokens = await this.createPairTokens(user.id, userRoles, user.email);
-    } else {
-      tokens = await this.createPairTokens(user.id, userRoles, user.login);
-    }
+    const tokens = await this.createPairTokens(user.id, user.roles, user.login);
 
     await this.tokensService.saveToken({
       userId: user.id,
@@ -65,7 +56,6 @@ export class AuthService {
   //-------------------------------------------------------------
   public async createUserWithGeneratedPassword(
     login: string,
-    roles: Role[],
   ): Promise<RegisterUserResponseDto> {
     const user = await this.usersService.findByLogin(login);
 
@@ -78,7 +68,6 @@ export class AuthService {
     await this.usersService.create({
       login: login,
       password: password,
-      roles: roles,
     });
 
     return { login, password };
@@ -89,13 +78,11 @@ export class AuthService {
     user: UserFromJwt,
     fingerprint: string,
   ): Promise<RefreshTokensResponseDto> {
-    let newTokens;
-
-    if (user.roles.includes(Role.admin)) {
-      newTokens = await this.createPairTokens(user.id, user.roles, user.email);
-    } else {
-      newTokens = await this.createPairTokens(user.id, user.roles, user.login);
-    }
+    const newTokens = await this.createPairTokens(
+      user.id,
+      user.roles,
+      user.login,
+    );
 
     await this.tokensService.saveToken({
       userId: user.id,
@@ -110,14 +97,12 @@ export class AuthService {
   private async createPairTokens(
     userId: string,
     roles: Role[],
-    login?: string,
-    email?: string,
+    login: string,
   ): Promise<CreatePairTokensResponse> {
     const tokenPayload: JwtTokenPayload = {
       sub: userId,
-      login: login,
-      email: email,
       roles: roles,
+      login: login,
     };
 
     const accessToken = await this.jwtToolsService.createToken(

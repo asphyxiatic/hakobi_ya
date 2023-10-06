@@ -34,6 +34,7 @@ export class JwtToolsService {
     return {
       id: decodeToken.sub,
       login: decodeToken.login,
+      roles: decodeToken.roles
     };
   }
 }

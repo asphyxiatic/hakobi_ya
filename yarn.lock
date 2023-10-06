@@ -860,10 +860,10 @@
   dependencies:
     uuid "9.0.0"
 
-"@nestjs/websockets@^10.2.6":
-  version "10.2.6"
-  resolved "https://registry.yarnpkg.com/@nestjs/websockets/-/websockets-10.2.6.tgz#03653a9024106fb240da47c0ea87052a47acf8aa"
-  integrity sha512-HwZADfixAMKMdMB/eBz0HJnPCs0r+W+5inpRwCazsQhwZniGUgXkfIhyRvNfHip/nb+DLS/M8BNBR2JGiJNTEg==
+"@nestjs/websockets@^10.2.7":
+  version "10.2.7"
+  resolved "https://registry.yarnpkg.com/@nestjs/websockets/-/websockets-10.2.7.tgz#de81e6ae8685e37d546e4bec2c15e2ba668eea32"
+  integrity sha512-NKJMubkwpUBsudbiyjuLZDT/W68K+fS/pe3vG5Ur8QoPn+fkI9SFCiQw27Cv4K0qVX2eGJ41yNmVfu61zGa4CQ==
   dependencies:
     iterare "1.2.1"
     object-hash "3.0.0"
@@ -6568,7 +6568,7 @@ socket.io-parser@~4.2.4:
     "@socket.io/component-emitter" "~3.1.0"
     debug "~4.3.1"
 
-socket.io@4.7.2:
+socket.io@4.7.2, socket.io@^4.7.2:
   version "4.7.2"
   resolved "https://registry.yarnpkg.com/socket.io/-/socket.io-4.7.2.tgz#22557d76c3f3ca48f82e73d68b7add36a22df002"
   integrity sha512-bvKVS29/I5fl2FGLNHuXlQaUH/BlzX1IN6S+NKLNZpBsPZIDH+90eQmCs2Railn4YUiww4SzUedJ6+uzwFnKLw==

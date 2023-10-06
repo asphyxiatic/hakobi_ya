@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class RegisterUserDto {
+export class CreateStreetDto {
   @IsString()
   @IsNotEmpty()
-  login!: string;
+  nameStreet!: string;
 }

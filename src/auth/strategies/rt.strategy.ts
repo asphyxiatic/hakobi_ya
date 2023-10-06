@@ -34,8 +34,7 @@ export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
 
     const userFromJwt: UserFromJwt = {
       id: payload.sub,
-      login: payload?.login,
-      email: payload?.email,
+      login: payload.login,
       roles: payload.roles,
     };
 

@@ -8,9 +8,6 @@ const tableName = 'users';
 
 @Entity(tableName)
 export class UserEntity extends BaseEntity {
-  @Column({ type: 'varchar', nullable: true, default: null, unique: true })
-  email!: string | null;
-
   @Column({ name: 'login', type: 'varchar', nullable: false, unique: true })
   login!: string;
 
