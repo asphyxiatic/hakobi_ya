@@ -2,11 +2,11 @@ import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from '../services/auth.service.js';
 import { GetFingerprints } from '../decorators/get-fingerprints.decorator.js';
 import { SignInDto } from '../dto/sign-in.dto.js';
-import { SignInResponseDto } from '../dto/sign-in-response.dto.js';
+import { SignInResponse } from '../interfaces/sign-in-response.interface.js';
 import { RtGuard } from '../guards/rt.guard.js';
 import { GetCurrentHttpUser } from '../../common/decorators/get-current-http-user.decorator.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
-import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
+import { TokensResponse } from '../interfaces/tokens-response.interface.js';
 
 @Controller('auth')
 export class AuthController {
@@ -16,7 +16,7 @@ export class AuthController {
   async signIn(
     @Body() credentials: SignInDto,
     @GetFingerprints() fingerprint: string,
-  ): Promise<SignInResponseDto> {
+  ): Promise<SignInResponse> {
     return this.authService.signIn(credentials, fingerprint);
   }
 
@@ -25,7 +25,7 @@ export class AuthController {
   async refreshTokens(
     @GetCurrentHttpUser() user: UserFromJwt,
     @GetFingerprints() fingerprint: string,
-  ): Promise<RefreshTokensResponseDto> {
+  ): Promise<TokensResponse> {
     return this.authService.refreshTokens(user, fingerprint);
   }
 }

@@ -1,5 +1,6 @@
 export enum WsIncomingAdminEvent {
   CREATE_STREET = 'create_street',
+  UPDATE_STREET = 'update_street',
   DELETE_STREETS = 'delete_street',
   REGISTER_USER = 'register_user',
   CREATE_HOUSE = 'create_house',
@@ -13,6 +14,7 @@ export enum WsIncomingAdminEvent {
 
 export enum WsOutgoingAdminEvent {
   CREATE_STREET = 'create_street',
+  UPDATE_STREET = 'update_street',
   DELETE_STREETS = 'delete_street',
   REGISTER_USER = 'register_user',
   REGISTER_USER_CREDENTIALS = 'user_credentials',

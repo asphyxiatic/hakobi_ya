@@ -1,7 +1,5 @@
-import { HouseEntity } from '../entities/house.entity.js';
-
 export interface UpdateHouseOptions {
-  houseId: HouseEntity['id'];
-  houseName?: HouseEntity['houseName'];
+  houseId: string;
+  houseName?: string;
   quantityEntrances?: number;
 }

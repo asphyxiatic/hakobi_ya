@@ -1,4 +1,4 @@
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import config from '../config/config.js';
 import { UserEntity } from '../users/entities/user.entity.js';
 import { HouseEntity } from '../houses/entities/house.entity.js';
@@ -18,4 +18,4 @@ export const appDataSource = new DataSource({
   url: config.DB_URL,
   migrationsTableName: 'migrations_table',
   migrations: ['./dist/src/database/migrations/*.js'],
-});
+} as DataSourceOptions);

@@ -1,7 +1,7 @@
 import { Role } from '../../users/enums/role.enum.js';
 
 export interface UserFromJwt {
-  id: string;
+  userId: string;
   login: string;
   roles: Role[];
 }

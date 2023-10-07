@@ -6,26 +6,14 @@ import { UsersModule } from '../users/users.module.js';
 import { TokensModule } from '../tokens/tokens.module.js';
 import { FingerprintsMiddleware } from './middlewares/fingerprints.middleware.js';
 import { EncryptionModule } from '../encryption/encryption.module.js';
-import { AtStrategy } from './strategies/at.strategy.js';
+import { HttpAtStrategy } from './strategies/http-at.strategy.js';
 import { RtStrategy } from './strategies/rt.strategy.js';
-import { APP_GUARD } from '@nestjs/core';
-import { AtGuard } from './guards/at.guard.js';
-import { RtGuard } from './guards/rt.guard.js';
-import { WsStrategy } from './strategies/ws.strategy.js';
-import { WsGuard } from './guards/ws.guard.js';
+import { WsAtStrategy } from './strategies/ws-at.strategy.js';
 
 @Module({
   imports: [JwtToolsModule, UsersModule, TokensModule, EncryptionModule],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    AtStrategy,
-    RtStrategy,
-    WsStrategy,
-    AtGuard,
-    RtGuard,
-    WsGuard,
-  ],
+  providers: [AuthService, HttpAtStrategy, RtStrategy, WsAtStrategy],
   exports: [AuthService],
 })
 export class AuthModule implements NestModule {

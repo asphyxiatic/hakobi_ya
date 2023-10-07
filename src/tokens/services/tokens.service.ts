@@ -4,7 +4,6 @@ import { TokenEntity } from '../entities/token.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EncryptionService } from '../../encryption/services/encryption.service.js';
 import * as bcrypt from 'bcrypt';
-import { SaveTokenOptions } from '../interfaces/save-token-options.interface.js';
 import { ValidateTokenOptions } from '../interfaces/validate-token-options.interface.js';
 
 @Injectable()
@@ -34,7 +33,7 @@ export class TokensService {
   //-----------------------------------------------------------
   public async getTokenForUserDevice(
     userId: string,
-    fingerprint: TokenEntity['fingerprint'],
+    fingerprint: string,
   ): Promise<TokenEntity> {
     return this.findOne({ userId, fingerprint });
   }
@@ -42,49 +41,49 @@ export class TokensService {
   //-----------------------------------------------------------
   public async getManyTokensForUserDevice(
     userId: string,
-    fingerprint: TokenEntity['fingerprint'],
+    fingerprint: string,
   ): Promise<TokenEntity[]> {
     return this.find({ userId, fingerprint });
   }
 
   //-------------------------------------------------------------
-  public async saveToken(saveOptions: SaveTokenOptions): Promise<void> {
-    try {
-      const encryptionToken = await this.encryptionService.encrypt(
-        saveOptions.value,
-      );
+  public async saveToken(
+    userId: string,
+    value: string,
+    fingerprint: string,
+  ): Promise<void> {
+    const encryptionToken = await this.encryptionService.encrypt(value);
 
-      const hashedEncryptionToken = bcrypt.hashSync(
-        encryptionToken,
-        this.saltRounds,
-      );
+    const hashedEncryptionToken = bcrypt.hashSync(
+      encryptionToken,
+      this.saltRounds,
+    );
 
-      const userDeviceToken = await this.getTokenForUserDevice(
-        saveOptions.userId,
-        saveOptions.fingerprint,
-      );
+    const userDeviceToken = await this.getTokenForUserDevice(
+      userId,
+      fingerprint,
+    );
 
-      if (!userDeviceToken) {
-        await this.tokensRepository.save(saveOptions);
-      } else {
-        await this.tokensRepository.save({
-          id: userDeviceToken.id,
-          value: hashedEncryptionToken,
-        });
-      }
-    } catch (error: any) {
-      throw new InternalServerErrorException(
-        '🚨 ошибка сохранения токена в базу данных!',
-      );
+    if (!userDeviceToken) {
+      await this.tokensRepository.save({
+        userId: userId,
+        value: value,
+        fingerprint,
+      });
+    } else {
+      await this.tokensRepository.save({
+        id: userDeviceToken.id,
+        value: hashedEncryptionToken,
+      });
     }
   }
 
   //-------------------------------------------------------------
-  public async validateToken({
-    userId,
-    value,
-    fingerprint,
-  }: ValidateTokenOptions): Promise<boolean> {
+  public async validateToken(
+    userId: string,
+    value: string,
+    fingerprint: string,
+  ): Promise<boolean> {
     const userDeviceTokens = await this.getManyTokensForUserDevice(
       userId,
       fingerprint,

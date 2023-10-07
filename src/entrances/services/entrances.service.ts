@@ -2,10 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { EntranceEntity } from '../entities/entrance.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateEntranceOptions } from '../interfaces/create-entrance-options.interface.js';
-import { UpdateEntranceOptions } from '../interfaces/update-entrance-options.interface.js';
-import { CompleteEntranceOptions } from '../interfaces/complete-entrance-options.interface.js';
-import { SettingСompletionEntranceResult } from '../interfaces/setting-completion-entrance-result.interface.js';
+import { SettingСompletionEntranceResponse } from '../interfaces/setting-completion-entrance-response.interface.js';
+import { HouseEntity } from '../../houses/entities/house.entity.js';
+import { ENTRANCE_NOT_FOUND } from '../../common/errors/errors.constants.js';
 
 @Injectable()
 export class EntrancesService {
@@ -22,17 +21,17 @@ export class EntrancesService {
   }
 
   // ---------------------------------------------------------------
-  public async createEntrancesForHouse({
-    houseId,
-    quantity,
-  }: CreateEntranceOptions): Promise<EntranceEntity[]> {
+  public async createEntrancesForHouse(
+    houseId: string,
+    quantity: number,
+  ): Promise<EntranceEntity[]> {
     const entrances: EntranceEntity[] = [];
 
-    for (let i = 1; i <= quantity; i++) {
+    for (let numberEntrance = 1; numberEntrance <= quantity; numberEntrance++) {
       entrances.push(
         await this.entrancesRepository.save({
           houseId: houseId,
-          numberEntrance: i,
+          numberEntrance: numberEntrance,
         }),
       );
     }
@@ -41,10 +40,10 @@ export class EntrancesService {
   }
 
   // ---------------------------------------------------------------
-  public async updateEntrancesForHouse({
-    houseId,
-    updatedQuantity,
-  }: UpdateEntranceOptions): Promise<EntranceEntity[]> {
+  public async updateEntrancesForHouse(
+    houseId: string,
+    updatedQuantity: number,
+  ): Promise<EntranceEntity[]> {
     const countEntrancesForHouse = await this.entrancesRepository.count({
       where: { houseId: houseId },
     });
@@ -58,10 +57,14 @@ export class EntrancesService {
         })
         .execute();
     } else if (countEntrancesForHouse < updatedQuantity) {
-      for (let i = countEntrancesForHouse + 1; i <= updatedQuantity; i++) {
+      for (
+        let numberEntrance = countEntrancesForHouse + 1;
+        numberEntrance <= updatedQuantity;
+        numberEntrance++
+      ) {
         await this.entrancesRepository.save({
           houseId: houseId,
-          numberEntrance: i,
+          numberEntrance: numberEntrance,
         });
       }
     }
@@ -74,19 +77,17 @@ export class EntrancesService {
   }
 
   // ---------------------------------------------------------------
-  public async settingСompletionEntrance({
-    houseId,
-    numberEntrance,
-    complete,
-  }: CompleteEntranceOptions): Promise<SettingСompletionEntranceResult> {
+  public async settingСompletionEntrance(
+    houseId: string,
+    numberEntrance: number,
+    complete: boolean,
+  ): Promise<SettingСompletionEntranceResponse> {
     const entrance = await this.findOne({
       houseId: houseId,
       numberEntrance: numberEntrance,
     });
 
-    if (!entrance) {
-      throw new NotFoundException('🚨 не найден подъезд!');
-    }
+    if (!entrance) throw new NotFoundException(ENTRANCE_NOT_FOUND);
 
     const updatedСonditionEntrance = await this.entrancesRepository.save({
       id: entrance.id,

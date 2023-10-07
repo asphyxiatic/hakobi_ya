@@ -7,6 +7,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../../users/services/users.service.js';
 import { Request } from 'express';
 import { TokensService } from '../../tokens/services/tokens.service.js';
+import { UNAUTHORIZED_RESOURCE } from '../../common/errors/errors.constants.js';
 
 @Injectable()
 export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
@@ -27,16 +28,16 @@ export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
     payload: JwtTokenPayload,
   ): Promise<UserFromJwt> {
     const isUserExist = await this.userService.isUserExist(
-      payload.sub,
+      payload.userId,
       payload.roles,
     );
 
     if (!isUserExist) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
     }
 
     const userFromJwt: UserFromJwt = {
-      id: payload.sub,
+      userId: payload.userId,
       login: payload.login,
       roles: payload.roles,
     };
@@ -44,14 +45,14 @@ export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request);
     const fingerprint = request['fingerprint'];
 
-    const isValidRefreshToken = await this.tokensService.validateToken({
-      userId: userFromJwt.id,
-      value: token,
-      fingerprint: fingerprint,
-    });
+    const isValidRefreshToken = await this.tokensService.validateToken(
+      userFromJwt.userId,
+      token,
+      fingerprint,
+    );
 
     if (!isValidRefreshToken) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
     }
 
     return userFromJwt;

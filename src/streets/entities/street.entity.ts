@@ -1,11 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  Relation,
-} from 'typeorm';
+import { Column, Entity, OneToMany, Relation } from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity.js';
 import { UserEntity } from '../../users/entities/user.entity.js';
 import { HouseEntity } from '../../houses/entities/house.entity.js';
@@ -18,7 +11,6 @@ export class StreetEntity extends BaseEntity {
     name: 'name_street',
     type: 'varchar',
     nullable: false,
-    unique: true,
   })
   nameStreet!: string;
 
@@ -27,11 +19,4 @@ export class StreetEntity extends BaseEntity {
 
   @OneToMany(() => HouseEntity, (house) => house.street)
   houses!: Relation<HouseEntity[]>;
-
-  @ManyToOne(() => UserEntity, (user) => user.streets, {
-    onUpdate: 'CASCADE',
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'owner_id' })
-  user!: Relation<UserEntity>;
 }

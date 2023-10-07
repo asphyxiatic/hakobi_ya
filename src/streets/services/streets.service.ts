@@ -6,9 +6,11 @@ import {
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StreetEntity } from '../entities/street.entity.js';
-import { CreateStreetOptions } from '../interfaces/create-street-options.interface.js';
-import { UpdateStreetOptions } from '../interfaces/update-street-options.interface.js';
-import { DeleteStreetsOptions } from '../interfaces/delete-street-options.interface.js';
+
+import {
+  FAILED_REMOVE_STREETS,
+  STREET_NOT_FOUND,
+} from '../../common/errors/errors.constants.js';
 
 @Injectable()
 export class StreetsService {
@@ -32,37 +34,31 @@ export class StreetsService {
   }
 
   // ----------------------------------------------------------------------
-  public async create(
-    createOptions: CreateStreetOptions,
-  ): Promise<StreetEntity> {
-    try {
-      return this.streetsRepository.save(createOptions);
-    } catch (error: any) {
-      throw new InternalServerErrorException(
-        `🚨 ошибка сохранения улицы в базу данных!`,
-      );
-    }
+  public async create(nameStreet: string): Promise<StreetEntity> {
+    return this.streetsRepository.save({ nameStreet: nameStreet });
   }
 
   // ----------------------------------------------------------------------
   public async update(
-    updateOptions: UpdateStreetOptions,
+    streetId: string,
+    nameStreet: string,
   ): Promise<StreetEntity> {
-    const street = this.findOne({ id: updateOptions.streetId });
+    const street = this.findOne({ id: streetId });
 
-    if (!street) {
-      throw new NotFoundException('🚨 не найдена улица!');
-    }
+    if (!street) throw new NotFoundException(STREET_NOT_FOUND);
 
-    return this.streetsRepository.save(updateOptions);
+    return this.streetsRepository.save({
+      id: streetId,
+      nameStreet: nameStreet,
+    });
   }
 
   // ----------------------------------------------------------------------
-  public async delete({ streetIds }: DeleteStreetsOptions): Promise<void> {
+  public async delete(streetIds: string[]): Promise<void> {
     try {
       await this.streetsRepository.delete(streetIds);
     } catch (error: any) {
-      throw new InternalServerErrorException('🚨 не удалось удалить улицу!');
+      throw new InternalServerErrorException(FAILED_REMOVE_STREETS);
     }
   }
 }

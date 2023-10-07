@@ -1,17 +1,24 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UsersService } from '../../users/services/users.service.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
 import config from '../../config/config.js';
 import { JwtToolsService } from '../../jwt/services/jwt-tools.service.js';
-import { CreatePairTokensResponse } from '../interfaces/create-pair-tokens-response.interface.js';
+import { TokensResponse } from '../interfaces/tokens-response.interface.js';
 import { TokensService } from '../../tokens/services/tokens.service.js';
 import { SignInDto } from '../dto/sign-in.dto.js';
-import { SignInResponseDto } from '../dto/sign-in-response.dto.js';
+import { SignInResponse } from '../interfaces/sign-in-response.interface.js';
 import passwordGenerator from 'generate-password-ts';
-import { CreateUserWithGeneratedPasswordResponse } from '../interfaces/create-user-with-generated-password-response.interface.js';
+import { RegisterUserResponse } from '../interfaces/register-user.interface.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
-import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
 import { Role } from '../../users/enums/role.enum.js';
+import {
+  EMAIL_USER_CONFLICT,
+  USER_NOT_FOUND,
+} from '../../common/errors/errors.constants.js';
 
 @Injectable()
 export class AuthService {
@@ -30,77 +37,78 @@ export class AuthService {
   public async signIn(
     credentials: SignInDto,
     fingerprint: string,
-  ): Promise<SignInResponseDto> {
-    const user = await this.usersService.findUserForCredentials(credentials);
+  ): Promise<SignInResponse> {
+    const { login, password } = credentials;
 
-    if (!user) {
-      throw new BadRequestException(
-        '🚨 неверный адрес электронной почты или пароль!',
-      );
-    }
+    const user = await this.usersService.findUserForCredentials(
+      login,
+      password,
+    );
 
-    const tokens = await this.createPairTokens(user.id, user.roles, user.login);
+    if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
-    await this.tokensService.saveToken({
-      userId: user.id,
-      value: tokens.refreshToken,
-      fingerprint: fingerprint,
-    });
+    const tokens = await this.createPairTokens(user.id, user.login, user.roles);
+
+    await this.tokensService.saveToken(
+      user.id,
+      tokens.refreshToken,
+      fingerprint,
+    );
 
     return {
-      user: user,
+      user: {
+        userId: user.id,
+        login: user.login,
+        roles: user.roles,
+      },
       ...tokens,
     };
   }
 
   //-------------------------------------------------------------
-  public async createUserWithGeneratedPassword(
-    login: string,
-  ): Promise<CreateUserWithGeneratedPasswordResponse> {
+  public async registerUser(login: string): Promise<RegisterUserResponse> {
     const user = await this.usersService.findByLogin(login);
 
-    if (user) {
-      throw new BadRequestException('🚨 логин занят!');
-    }
+    if (user) throw new ConflictException(EMAIL_USER_CONFLICT);
 
     const password = passwordGenerator.generate({ length: 8, numbers: true });
 
-    await this.usersService.create({
-      login: login,
-      password: password,
-    });
+    await this.usersService.create(login, password);
 
-    return { login, password };
+    return { login: login, password: password };
   }
 
   //-------------------------------------------------------------
   public async refreshTokens(
     user: UserFromJwt,
     fingerprint: string,
-  ): Promise<RefreshTokensResponseDto> {
+  ): Promise<TokensResponse> {
     const newTokens = await this.createPairTokens(
-      user.id,
-      user.roles,
+      user.userId,
       user.login,
+      user.roles,
     );
 
-    await this.tokensService.saveToken({
-      userId: user.id,
-      value: newTokens.refreshToken,
-      fingerprint: fingerprint,
-    });
+    await this.tokensService.saveToken(
+      user.userId,
+      newTokens.refreshToken,
+      fingerprint,
+    );
 
-    return newTokens;
+    return {
+      accessToken: newTokens.accessToken,
+      refreshToken: newTokens.refreshToken,
+    };
   }
 
   //-------------------------------------------------------------------------
   private async createPairTokens(
     userId: string,
-    roles: Role[],
     login: string,
-  ): Promise<CreatePairTokensResponse> {
+    roles: Role[],
+  ): Promise<TokensResponse> {
     const tokenPayload: JwtTokenPayload = {
-      sub: userId,
+      userId: userId,
       roles: roles,
       login: login,
     };
@@ -117,6 +125,6 @@ export class AuthService {
       this.JWT_REFRESH_EXPIRES,
     );
 
-    return { accessToken, refreshToken };
+    return { accessToken: accessToken, refreshToken: refreshToken };
   }
 }

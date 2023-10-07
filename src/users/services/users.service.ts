@@ -4,14 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { UserCredentials } from '../interfaces/user-credentials.interface.js';
-import { CreateUserOptions } from '../interfaces/create-user-options.interface.js';
 import { UserEntity } from '../entities/user.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { DeleteUsersOptions } from '../interfaces/delete-user-options.interface.js';
 import { Role } from '../enums/role.enum.js';
-import { UpdateUserOptions } from '../interfaces/update-user-options.interface.js';
+import {
+  FAILED_REMOVE_USERS,
+  FAILED_SAVE_USER,
+  USER_NOT_FOUND,
+} from '../../common/errors/errors.constants.js';
 
 @Injectable()
 export class UsersService {
@@ -28,115 +29,97 @@ export class UsersService {
   }
 
   //-------------------------------------------------------------
-  public async findOne(findOptions: FindOptionsWhere<UserEntity>) {
+  public async findOne(
+    findOptions: FindOptionsWhere<UserEntity>,
+  ): Promise<UserEntity> {
     return this.usersRepository.findOne({ where: findOptions });
   }
 
   //-------------------------------------------------------------
-  public async findById(userId: UserEntity['id']) {
+  public async findById(userId: string): Promise<UserEntity> {
     return this.findOne({ id: userId });
   }
 
   //-------------------------------------------------------------
-  public async findByLogin(login: UserEntity['id']): Promise<UserEntity> {
+  public async findByLogin(login: string): Promise<UserEntity> {
     return this.usersRepository.findOne({ where: { login: login } });
   }
 
   //-------------------------------------------------------------
-  public async create(createOptions: CreateUserOptions): Promise<UserEntity> {
+  public async create(login: string, password: string): Promise<UserEntity> {
     try {
-      const hashedPassword = bcrypt.hashSync(
-        createOptions.password,
-        this.saltRounds,
-      );
+      const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
 
       const newUser = await this.usersRepository.save({
-        ...createOptions,
+        login: login,
         password: hashedPassword,
       });
 
       return newUser;
     } catch (error: any) {
-      throw new InternalServerErrorException(
-        '🚨 ошибка сохранения пользователя в базу данных!',
-      );
+      throw new InternalServerErrorException(FAILED_SAVE_USER);
     }
   }
 
   // -------------------------------------------------------------
-  public async update({
-    userId,
-    login,
-  }: UpdateUserOptions): Promise<UserEntity> {
+  public async update(userId: string, login: string): Promise<UserEntity> {
     const user = await this.findById(userId);
-    if (!user) {
-      throw new NotFoundException('🚨 не удалось найти пользователя!');
-    }
+
+    if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
     return this.usersRepository.save({ id: user.id, login: login });
   }
 
   // -------------------------------------------------------------
-  public async delete({ userIds }: DeleteUsersOptions): Promise<void> {
+  public async delete(userIds: string[]): Promise<void> {
     try {
       await this.usersRepository.delete(userIds);
     } catch (error: any) {
-      throw new InternalServerErrorException(
-        '🚨 не удалось удалить пользователей!',
-      );
+      throw new InternalServerErrorException(FAILED_REMOVE_USERS);
     }
   }
 
   // -------------------------------------------------------------
   public async findUserForCredentials(
-    credentials: UserCredentials,
+    login: string,
+    password: string,
   ): Promise<UserEntity> {
-    const user = await this.findByLogin(credentials.login);
+    const user = await this.findByLogin(login);
 
-    if (!user) {
-      return undefined;
-    }
+    if (!user) return undefined;
 
-    const passwordIsValid = bcrypt.compareSync(
-      credentials.password,
-      user.password,
-    );
+    const passwordIsValid = bcrypt.compareSync(password, user.password);
 
-    if (!passwordIsValid) {
-      return undefined;
-    }
+    if (!passwordIsValid) return undefined;
 
     return user;
   }
 
   // -------------------------------------------------------------
-  public async isUserExist(
-    userId: UserEntity['id'],
-    roles: Role[],
-  ): Promise<boolean> {
+  public async isUserExist(userId: string, roles: Role[]): Promise<boolean> {
     const user = await this.findOne({ id: userId });
 
-    if (!user) {
-      return false;
-    }
+    if (!user) return false;
 
     const rolesMatch = user.roles.every((role) => roles.includes(role));
 
-    return rolesMatch;
+    const isUserExist = user && rolesMatch;
+
+    return isUserExist;
   }
 
   // -------------------------------------------------------------
-  public async enableActivityUser(userId: UserEntity['id']): Promise<void> {
+  public async enableActivityUser(userId: string): Promise<void> {
     const user = await this.findById(userId);
 
-    if (user) {
-      throw new NotFoundException('🚨 не удалось найти пользователя!');
-    }
+    if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
     let userRoles = user.roles;
 
     if (userRoles.includes(Role.guest)) {
       userRoles = userRoles.filter((role) => role !== Role.guest);
+
+      userRoles.push(Role.user);
 
       await this.usersRepository.save({
         id: userId,
@@ -146,16 +129,16 @@ export class UsersService {
   }
 
   // -------------------------------------------------------------
-  public async disableActivityUser(userId: UserEntity['id']): Promise<void> {
+  public async disableActivityUser(userId: string): Promise<void> {
     const user = await this.findById(userId);
 
-    if (user) {
-      throw new NotFoundException('🚨 не удалось найти пользователя!');
-    }
+    if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
-    const userRoles = user.roles;
+    let userRoles = user.roles;
 
     if (!userRoles.includes(Role.guest)) {
+      userRoles = userRoles.filter((role) => role !== Role.user);
+
       userRoles.push(Role.guest);
 
       await this.usersRepository.save({

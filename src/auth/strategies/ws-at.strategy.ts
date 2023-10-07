@@ -5,9 +5,10 @@ import config from '../../config/config.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
 import { UsersService } from '../../users/services/users.service.js';
+import { UNAUTHORIZED_RESOURCE } from '../../common/errors/errors.constants.js';
 
 @Injectable()
-export class WsStrategy extends PassportStrategy(Strategy, 'ws') {
+export class WsAtStrategy extends PassportStrategy(Strategy, 'ws') {
   constructor(private readonly userService: UsersService) {
     super({
       jwtFromRequest: ExtractJwt.fromUrlQueryParameter('bearerToken'),
@@ -18,18 +19,18 @@ export class WsStrategy extends PassportStrategy(Strategy, 'ws') {
 
   async validate(payload: JwtTokenPayload) {
     const isUserExist = await this.userService.isUserExist(
-      payload.sub,
+      payload.userId,
       payload.roles,
     );
 
     const userFromJwt: UserFromJwt = {
-      id: payload.sub,
+      userId: payload.userId,
       login: payload.login,
       roles: payload.roles,
     };
 
     if (!isUserExist) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
     }
 
     return userFromJwt;

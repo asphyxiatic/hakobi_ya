@@ -15,7 +15,7 @@ import {
   WsIncomingUserEvent,
   WsOutgoingUserEvent,
 } from '../enums/ws-user-events.enum.js';
-import { WsGuard } from '../../auth/guards/ws.guard.js';
+import { WsAtGuard } from '../../auth/guards/ws-at.guard.js';
 import { WsRoleGuard } from '../guards/ws-role.guard.js';
 import { Role } from '../enums/role.enum.js';
 
@@ -36,13 +36,13 @@ export class UsersGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   //----------------------------------------------------------
   @UseGuards(WsRoleGuard([Role.user, Role.admin], [Role.guest]))
-  @UseGuards(WsGuard)
+  @UseGuards(WsAtGuard)
   @SubscribeMessage(WsIncomingUserEvent.SETTING_СOMPLETION_ENTRANCE)
   async settingСompletionEntrance(
-    @MessageBody() dto: SettingСompletionEntranceDto,
+    @MessageBody() {houseId, numberEntrance, complete}: SettingСompletionEntranceDto,
   ): Promise<void> {
     const entranceStatus =
-      await this.entrancesService.settingСompletionEntrance(dto);
+      await this.entrancesService.settingСompletionEntrance(houseId, numberEntrance, complete);
 
     this.server.emit(
       WsOutgoingUserEvent.SETTING_СOMPLETION_ENTRANCE,

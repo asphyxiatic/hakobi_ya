@@ -8,7 +8,7 @@ import {
 import { AuthService } from '../../auth/services/auth.service.js';
 import { Server, Socket } from 'socket.io';
 import { RegisterUserDto } from '../dto/register-user.dto.js';
-import { WsGuard } from '../../auth/guards/ws.guard.js';
+import { WsAtGuard } from '../../auth/guards/ws-at.guard.js';
 import { WsRoleGuard } from '../../users/guards/ws-role.guard.js';
 import {
   ForbiddenException,
@@ -17,7 +17,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { Role } from '../../users/enums/role.enum.js';
-import { GetCurrentWsUser } from '../../common/decorators/get-current-ws-user.decorator.js';
+import { GetCurrentWsClient } from '../../common/decorators/get-current-ws-client.decorator.js';
 import { CreateStreetDto } from '../dto/create-street.dto.js';
 import { UserFromJwt } from '../../auth/interfaces/user-from-jwt.interface.js';
 import { StreetsService } from '../../streets/services/streets.service.js';
@@ -36,10 +36,12 @@ import { EnableActivityUserDto } from '../dto/enable-activity-user.dto.js';
 import { DisableActivityUserDto } from '../dto/disable-activity-user.dto.js';
 import { UpdateUserDto } from '../dto/update-user.dto.js';
 import { DeleteUsersDto } from '../dto/delete-users.dto.js';
+import { UpdateStreetsDto } from '../dto/update-street.dto.js';
+import { FORBIDDEN } from '../../common/errors/errors.constants.js';
 
 @UsePipes(new ValidationPipe())
 @UseGuards(WsRoleGuard([Role.admin]))
-@UseGuards(WsGuard)
+@UseGuards(WsAtGuard)
 @WebSocketGateway(config.WS_PORT, { cors: { origin: '*' } })
 export class AdminsGateway {
   constructor(
@@ -57,9 +59,7 @@ export class AdminsGateway {
     @MessageBody() { login }: RegisterUserDto,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    const newUser = await this.authService.createUserWithGeneratedPassword(
-      login,
-    );
+    const newUser = await this.authService.registerUser(login);
 
     client.emit(WsOutgoingAdminEvent.REGISTER_USER_CREDENTIALS, newUser);
 
@@ -70,14 +70,23 @@ export class AdminsGateway {
   @SubscribeMessage(WsIncomingAdminEvent.CREATE_STREET)
   async addStreet(
     @MessageBody() { nameStreet }: CreateStreetDto,
-    @GetCurrentWsUser() user: UserFromJwt,
   ): Promise<void> {
-    const newStreet = await this.streetsService.create({
-      ownerId: user.id,
-      nameStreet: nameStreet,
-    });
+    const newStreet = await this.streetsService.create(nameStreet);
 
     this.server.emit(WsOutgoingAdminEvent.CREATE_STREET, newStreet);
+  }
+
+  //----------------------------------------------------------
+  @SubscribeMessage(WsIncomingAdminEvent.UPDATE_STREET)
+  async updateStreets(
+    @MessageBody() { streetId, nameStreet }: UpdateStreetsDto,
+  ): Promise<void> {
+    const updatedStreet = await this.streetsService.update(
+      streetId,
+      nameStreet,
+    );
+
+    this.server.emit(WsOutgoingAdminEvent.UPDATE_STREET, updatedStreet);
   }
 
   //----------------------------------------------------------
@@ -85,29 +94,23 @@ export class AdminsGateway {
   async deleteStreets(
     @MessageBody() { streetIds }: DeleteStreetsDto,
   ): Promise<void> {
-    await this.streetsService.delete({
-      streetIds: streetIds,
-    });
+    await this.streetsService.delete(streetIds);
 
     this.server.emit(WsOutgoingAdminEvent.DELETE_STREETS, streetIds);
   }
 
   //----------------------------------------------------------
   @SubscribeMessage(WsIncomingAdminEvent.CREATE_HOUSE)
-  async createHouse(@MessageBody() dto: CreateHouseDto): Promise<void> {
-    const newHouse = await this.housesService.create(dto);
+  async createHouse(
+    @MessageBody() { streetId, houseName, quantityEntrances }: CreateHouseDto,
+  ): Promise<void> {
+    const newHouse = await this.housesService.create(
+      streetId,
+      houseName,
+      quantityEntrances,
+    );
 
     this.server.emit(WsOutgoingAdminEvent.CREATE_HOUSE, newHouse);
-  }
-
-  //----------------------------------------------------------
-  @SubscribeMessage(WsIncomingAdminEvent.DELETE_HOUSES)
-  async deleteHouses(
-    @MessageBody() { houseIds }: DeleteHousesDto,
-  ): Promise<void> {
-    await this.housesService.delete({ houseIds: houseIds });
-
-    this.server.emit(WsOutgoingAdminEvent.DELETE_HOUSES, houseIds);
   }
 
   //----------------------------------------------------------
@@ -119,13 +122,23 @@ export class AdminsGateway {
   }
 
   //----------------------------------------------------------
+  @SubscribeMessage(WsIncomingAdminEvent.DELETE_HOUSES)
+  async deleteHouses(
+    @MessageBody() { houseIds }: DeleteHousesDto,
+  ): Promise<void> {
+    await this.housesService.delete(houseIds);
+
+    this.server.emit(WsOutgoingAdminEvent.DELETE_HOUSES, houseIds);
+  }
+
+  //----------------------------------------------------------
   @SubscribeMessage(WsIncomingAdminEvent.ENABLE_ACTIVITY_USER)
   async enableActivityUser(
     @MessageBody() { userId }: EnableActivityUserDto,
-    @GetCurrentWsUser() user: UserFromJwt,
+    @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    if (userId === user.id) {
-      throw new ForbiddenException();
+    if (userId === user.userId) {
+      throw new ForbiddenException(FORBIDDEN);
     }
 
     await this.usersService.enableActivityUser(userId);
@@ -137,10 +150,10 @@ export class AdminsGateway {
   @SubscribeMessage(WsIncomingAdminEvent.DISABLE_ACTIVITY_USER)
   async disableActivityUser(
     @MessageBody() { userId }: DisableActivityUserDto,
-    @GetCurrentWsUser() user: UserFromJwt,
+    @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    if (userId === user.id) {
-      throw new ForbiddenException();
+    if (userId === user.userId) {
+      throw new ForbiddenException(FORBIDDEN);
     }
 
     await this.usersService.disableActivityUser(userId);
@@ -151,14 +164,14 @@ export class AdminsGateway {
   //----------------------------------------------------------
   @SubscribeMessage(WsIncomingAdminEvent.UPDATE_USER)
   async updateUser(
-    @MessageBody() dto: UpdateUserDto,
-    @GetCurrentWsUser() user: UserFromJwt,
+    @MessageBody() { userId, login }: UpdateUserDto,
+    @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    if (dto.userId === user.id) {
-      throw new ForbiddenException();
+    if (userId === user.userId) {
+      throw new ForbiddenException(FORBIDDEN);
     }
 
-    const updatedUser = await this.usersService.update(dto);
+    const updatedUser = await this.usersService.update(userId, login);
 
     this.server.emit(WsOutgoingAdminEvent.UPDATE_USER, updatedUser);
   }
@@ -167,11 +180,11 @@ export class AdminsGateway {
   @SubscribeMessage(WsIncomingAdminEvent.DELETE_USER)
   async deleteUsers(
     @MessageBody() { userIds }: DeleteUsersDto,
-    @GetCurrentWsUser() user: UserFromJwt,
+    @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    const userIdsForDelete = userIds.filter((userId) => userId !== user.id);
+    const userIdsForDelete = userIds.filter((userId) => userId !== user.userId);
 
-    await this.usersService.delete({ userIds: userIdsForDelete });
+    await this.usersService.delete(userIdsForDelete);
 
     this.server.emit(WsOutgoingAdminEvent.DELETE_USER, userIds);
   }

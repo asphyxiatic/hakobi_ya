@@ -7,9 +7,13 @@ import { Repository } from 'typeorm';
 import { HouseEntity } from '../entities/house.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntrancesService } from '../../entrances/services/entrances.service.js';
-import { CreateHouseOptions } from '../interfaces/create-house-options.interface.js';
+import { CreateHouseResponse } from '../interfaces/create-house-response.interface.js';
+import { UpdateHouseResponse } from '../interfaces/update-house-response.interface.js';
+import {
+  FAILED_REMOVE_HOUSES,
+  HOUSE_NOT_FOUND,
+} from '../../common/errors/errors.constants.js';
 import { UpdateHouseOptions } from '../interfaces/update-house-options.interface.js';
-import { DeleteHousesOptions } from '../interfaces/delete-house-options.interface.js';
 
 @Injectable()
 export class HousesService {
@@ -20,22 +24,27 @@ export class HousesService {
   ) {}
 
   //--------------------------------------------------------------------------
-  public async create({
-    streetId,
-    houseName,
-    quantityEntrances,
-  }: CreateHouseOptions): Promise<HouseEntity & { entrancesCount: number }> {
+  public async create(
+    streetId: string,
+    houseName: string,
+    quantityEntrances: number,
+  ): Promise<CreateHouseResponse> {
     const newHouse = await this.housesRepository.save({
       streetId: streetId,
       houseName: houseName,
     });
 
-    const entrances = await this.entrancesService.createEntrancesForHouse({
-      houseId: newHouse.id,
-      quantity: quantityEntrances,
-    });
+    const entrances = await this.entrancesService.createEntrancesForHouse(
+      newHouse.id,
+      quantityEntrances,
+    );
 
-    return { ...newHouse, entrancesCount: entrances.length };
+    return {
+      id: newHouse.id,
+      houseName: newHouse.houseName,
+      streetId: newHouse.streetId,
+      entrances: entrances,
+    };
   }
 
   //--------------------------------------------------------------------------
@@ -43,15 +52,13 @@ export class HousesService {
     houseId,
     houseName,
     quantityEntrances,
-  }: UpdateHouseOptions): Promise<HouseEntity> {
+  }: UpdateHouseOptions): Promise<UpdateHouseResponse> {
     const house = await this.housesRepository.findOne({
       where: { id: houseId },
       relations: { entrances: true },
     });
 
-    if (!house) {
-      throw new NotFoundException('🚨 не найден дом в базе данных!');
-    }
+    if (!house) throw new NotFoundException(HOUSE_NOT_FOUND);
 
     let updateHouse = house;
 
@@ -65,24 +72,26 @@ export class HousesService {
     let updateEntrances = house.entrances;
 
     if (quantityEntrances) {
-      updateEntrances = await this.entrancesService.updateEntrancesForHouse({
-        houseId: houseId,
-        updatedQuantity: quantityEntrances,
-      });
+      updateEntrances = await this.entrancesService.updateEntrancesForHouse(
+        houseId,
+        quantityEntrances,
+      );
     }
 
     return {
-      ...updateHouse,
+      id: updateHouse.id,
+      houseName: updateHouse.houseName,
+      streetId: updateHouse.streetId,
       entrances: updateEntrances,
     };
   }
 
   //--------------------------------------------------------------------------
-  public async delete({ houseIds }: DeleteHousesOptions): Promise<void> {
+  public async delete(houseIds: string[]): Promise<void> {
     try {
       await this.housesRepository.delete(houseIds);
     } catch (error: any) {
-      throw new InternalServerErrorException('🚨 не удалось удалить дома!');
+      throw new InternalServerErrorException(FAILED_REMOVE_HOUSES);
     }
   }
 }

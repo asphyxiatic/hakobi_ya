@@ -1,4 +1,4 @@
-export interface CreatePairTokensResponse {
+export interface TokensResponse {
   accessToken: string;
   refreshToken: string;
 }
