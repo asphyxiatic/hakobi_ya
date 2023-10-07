@@ -14,9 +14,6 @@ export class UserEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: false })
   password!: string;
 
-  @Column({ type: 'boolean', default: true, nullable: false })
-  active!: boolean;
-
   @Column({
     type: 'enum',
     enum: Role,

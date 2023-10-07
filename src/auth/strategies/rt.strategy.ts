@@ -26,7 +26,10 @@ export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
     request: Request,
     payload: JwtTokenPayload,
   ): Promise<UserFromJwt> {
-    const isUserExist = await this.userService.isUserExist(payload.sub);
+    const isUserExist = await this.userService.isUserExist(
+      payload.sub,
+      payload.roles,
+    );
 
     if (!isUserExist) {
       throw new UnauthorizedException();

@@ -8,7 +8,7 @@ import { TokensService } from '../../tokens/services/tokens.service.js';
 import { SignInDto } from '../dto/sign-in.dto.js';
 import { SignInResponseDto } from '../dto/sign-in-response.dto.js';
 import passwordGenerator from 'generate-password-ts';
-import { RegisterUserResponseDto } from '../dto/create-user-response.dto.js';
+import { CreateUserWithGeneratedPasswordResponse } from '../interfaces/create-user-with-generated-password-response.interface.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { RefreshTokensResponseDto } from '../dto/refresh-tokens-response.dto.js';
 import { Role } from '../../users/enums/role.enum.js';
@@ -56,7 +56,7 @@ export class AuthService {
   //-------------------------------------------------------------
   public async createUserWithGeneratedPassword(
     login: string,
-  ): Promise<RegisterUserResponseDto> {
+  ): Promise<CreateUserWithGeneratedPasswordResponse> {
     const user = await this.usersService.findByLogin(login);
 
     if (user) {

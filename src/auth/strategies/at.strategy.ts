@@ -17,7 +17,10 @@ export class AtStrategy extends PassportStrategy(Strategy, 'at') {
   }
 
   async validate(payload: JwtTokenPayload): Promise<UserFromJwt> {
-    const isUserExist = await this.userService.isUserExist(payload.sub);
+    const isUserExist = await this.userService.isUserExist(
+      payload.sub,
+      payload.roles,
+    );
 
     const userFromJwt: UserFromJwt = {
       id: payload.sub,

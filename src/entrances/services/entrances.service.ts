@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateEntranceOptions } from '../interfaces/create-entrance-options.interface.js';
 import { UpdateEntranceOptions } from '../interfaces/update-entrance-options.interface.js';
 import { CompleteEntranceOptions } from '../interfaces/complete-entrance-options.interface.js';
+import { SettingСompletionEntranceResult } from '../interfaces/setting-completion-entrance-result.interface.js';
 
 @Injectable()
 export class EntrancesService {
@@ -77,7 +78,7 @@ export class EntrancesService {
     houseId,
     numberEntrance,
     complete,
-  }: CompleteEntranceOptions): Promise<EntranceEntity> {
+  }: CompleteEntranceOptions): Promise<SettingСompletionEntranceResult> {
     const entrance = await this.findOne({
       houseId: houseId,
       numberEntrance: numberEntrance,
@@ -93,6 +94,10 @@ export class EntrancesService {
       completed: complete,
     });
 
-    return updatedСonditionEntrance;
+    return {
+      houseId: updatedСonditionEntrance.houseId,
+      numberEntrance: updatedСonditionEntrance.numberEntrance,
+      completed: updatedСonditionEntrance.completed,
+    };
   }
 }

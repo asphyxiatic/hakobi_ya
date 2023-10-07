@@ -13,7 +13,6 @@ import { AtGuard } from './guards/at.guard.js';
 import { RtGuard } from './guards/rt.guard.js';
 import { WsStrategy } from './strategies/ws.strategy.js';
 import { WsGuard } from './guards/ws.guard.js';
-import { AuthGateway } from './gateways/auth.gateway.js';
 
 @Module({
   imports: [JwtToolsModule, UsersModule, TokensModule, EncryptionModule],
@@ -23,13 +22,9 @@ import { AuthGateway } from './gateways/auth.gateway.js';
     AtStrategy,
     RtStrategy,
     WsStrategy,
-    {
-      provide: APP_GUARD,
-      useClass: AtGuard,
-    },
+    AtGuard,
     RtGuard,
     WsGuard,
-    AuthGateway,
   ],
   exports: [AuthService],
 })

@@ -9,7 +9,6 @@ import { StreetEntity } from '../entities/street.entity.js';
 import { CreateStreetOptions } from '../interfaces/create-street-options.interface.js';
 import { UpdateStreetOptions } from '../interfaces/update-street-options.interface.js';
 import { DeleteStreetsOptions } from '../interfaces/delete-street-options.interface.js';
-import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class StreetsService {
@@ -39,7 +38,7 @@ export class StreetsService {
     try {
       return this.streetsRepository.save(createOptions);
     } catch (error: any) {
-      throw new WsException(
+      throw new InternalServerErrorException(
         `🚨 ошибка сохранения улицы в базу данных!`,
       );
     }

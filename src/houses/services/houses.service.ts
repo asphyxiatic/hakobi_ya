@@ -24,7 +24,7 @@ export class HousesService {
     streetId,
     houseName,
     quantityEntrances,
-  }: CreateHouseOptions): Promise<HouseEntity> {
+  }: CreateHouseOptions): Promise<HouseEntity & { entrancesCount: number }> {
     const newHouse = await this.housesRepository.save({
       streetId: streetId,
       houseName: houseName,
@@ -35,7 +35,7 @@ export class HousesService {
       quantity: quantityEntrances,
     });
 
-    return { ...newHouse, entrances: entrances };
+    return { ...newHouse, entrancesCount: entrances.length };
   }
 
   //--------------------------------------------------------------------------

@@ -20,8 +20,8 @@ export class AuthController {
     return this.authService.signIn(credentials, fingerprint);
   }
 
-  @Post('refresh')
   @UseGuards(RtGuard)
+  @Post('refresh')
   async refreshTokens(
     @GetCurrentHttpUser() user: UserFromJwt,
     @GetFingerprints() fingerprint: string,
