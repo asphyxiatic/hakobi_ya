@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
-export class SendPasswordRecoveryEmailDto {
+export class SendPasswordResetEmailDto {
   @IsEmail()
   @IsNotEmpty()
   login!: string;
