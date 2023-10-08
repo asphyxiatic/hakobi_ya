@@ -7,11 +7,14 @@ const tableName = 'users';
 
 @Entity(tableName)
 export class UserEntity extends BaseEntity {
-  @Column({ name: 'login', type: 'varchar', nullable: false, unique: true })
+  @Column({ type: 'varchar', nullable: false, unique: true })
   login!: string;
 
   @Column({ type: 'varchar', nullable: false })
   password!: string;
+
+  @Column({ type: 'boolean', default: false, nullable: false })
+  online!: true;
 
   @Column({
     name: 'recovery_token',

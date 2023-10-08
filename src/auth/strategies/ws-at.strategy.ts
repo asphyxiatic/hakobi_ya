@@ -29,9 +29,7 @@ export class WsAtStrategy extends PassportStrategy(Strategy, 'ws') {
       roles: payload.roles,
     };
 
-    if (!isUserExist) {
-      throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
-    }
+    if (!isUserExist) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
 
     return userFromJwt;
   }

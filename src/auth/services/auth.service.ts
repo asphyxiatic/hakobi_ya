@@ -26,7 +26,7 @@ export class AuthService {
   private readonly JWT_REFRESH_SECRET = config.JWT_REFRESH_SECRET_KEY;
   private readonly JWT_RECOVERY_SECRET = config.JWT_RECOVERY_SECRET_KEY;
   private readonly JWT_ACCESS_EXPIRES = '60d';
-  private readonly JWT_RECOVERY_EXPIRES = '5m';
+  private readonly JWT_RECOVERY_EXPIRES = '60d';
   private readonly JWT_REFRESH_EXPIRES = '60d';
 
   constructor(
@@ -124,6 +124,45 @@ export class AuthService {
     await this.usersService.setRecoveryToken(userId, recoveryToken);
 
     return recoveryToken;
+  }
+
+  // -------------------------------------------------------------
+  public async resetPassword(
+    userId: string,
+    password: string,
+    fingerprint: string,
+  ): Promise<SignInResponse> {
+    const userWithUpdatedPassword = await this.usersService.updatePassword(
+      userId,
+      password,
+    );
+
+    await this.usersService.setRecoveryToken(userWithUpdatedPassword.id, null);
+
+    const tokens = await this.createPairTokens(
+      userWithUpdatedPassword.id,
+      userWithUpdatedPassword.login,
+      userWithUpdatedPassword.roles,
+    );
+
+    await this.tokensService.saveToken(
+      userWithUpdatedPassword.id,
+      tokens.refreshToken,
+      fingerprint,
+    );
+
+    return this.signIn(
+      {
+        login: userWithUpdatedPassword.login,
+        password: password,
+      },
+      fingerprint,
+    );
+  }
+
+  //-------------------------------------------------------------------------
+  public async changePassword(userId: string, password: string): Promise<void> {
+    await this.usersService.updatePassword(userId, password);
   }
 
   //-------------------------------------------------------------------------

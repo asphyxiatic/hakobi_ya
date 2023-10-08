@@ -51,9 +51,8 @@ export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
       fingerprint,
     );
 
-    if (!isValidRefreshToken) {
+    if (!isValidRefreshToken)
       throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
-    }
 
     return userFromJwt;
   }

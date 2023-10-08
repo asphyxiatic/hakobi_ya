@@ -46,6 +46,17 @@ export class UsersService {
   }
 
   //-------------------------------------------------------------
+  public async findAdminByLogin(login: string): Promise<UserEntity> {
+    const user = await this.findOne({ login: login });
+
+    const isAdmin = user.roles.includes(Role.admin);
+
+    if (!isAdmin) return undefined;
+
+    return user;
+  }
+
+  //-------------------------------------------------------------
   public async create(login: string, password: string): Promise<UserEntity> {
     try {
       const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
@@ -62,12 +73,25 @@ export class UsersService {
   }
 
   // -------------------------------------------------------------
-  public async update(userId: string, login: string): Promise<UserEntity> {
+  public async updateLogin(userId: string, login: string): Promise<UserEntity> {
     const user = await this.findById(userId);
 
     if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
     return this.usersRepository.save({ id: user.id, login: login });
+  }
+
+  public async updatePassword(
+    userId: string,
+    password: string,
+  ): Promise<UserEntity> {
+    const user = await this.findById(userId);
+
+    if (!user) throw new NotFoundException(USER_NOT_FOUND);
+
+    const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
+
+    return this.usersRepository.save({ id: user.id, password: hashedPassword });
   }
 
   // -------------------------------------------------------------
@@ -104,6 +128,14 @@ export class UsersService {
       id: userId,
       recoveryToken: recoveryToken,
     });
+  }
+
+  // -------------------------------------------------------------
+  public async verifyRecoveryToken(
+    userId: string,
+    recoveryToken: string,
+  ): Promise<boolean> {
+    return !!this.findOne({ id: userId, recoveryToken: recoveryToken });
   }
 
   // -------------------------------------------------------------

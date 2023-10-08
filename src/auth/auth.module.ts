@@ -9,11 +9,18 @@ import { EncryptionModule } from '../encryption/encryption.module.js';
 import { HttpAtStrategy } from './strategies/http-at.strategy.js';
 import { RtStrategy } from './strategies/rt.strategy.js';
 import { WsAtStrategy } from './strategies/ws-at.strategy.js';
+import { RecoveryStrategy } from './strategies/recovery.strategy.js';
 
 @Module({
   imports: [JwtToolsModule, UsersModule, TokensModule, EncryptionModule],
   controllers: [AuthController],
-  providers: [AuthService, HttpAtStrategy, RtStrategy, WsAtStrategy],
+  providers: [
+    AuthService,
+    HttpAtStrategy,
+    RtStrategy,
+    WsAtStrategy,
+    RecoveryStrategy,
+  ],
   exports: [AuthService],
 })
 export class AuthModule implements NestModule {

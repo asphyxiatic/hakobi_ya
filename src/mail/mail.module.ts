@@ -1,18 +1,13 @@
 import { Module } from '@nestjs/common';
-import nodemailer from 'nodemailer';
-import config from '../config/config.js';
-import SMTPTransport from 'nodemailer/lib/smtp-transport/index.js';
+import * as nodemailer from 'nodemailer';
 import { MailService } from './services/mail.service.js';
+import { mailConfig } from '../config/mail.config.js';
 
 const providers = [
   {
     provide: 'MailTransporter',
     useFactory: async () => {
-      const mailerTransporter = nodemailer.createTransport({
-        url: config.MAIL_URL_TRANSPORT,
-        from: `"${config.MAIL_FROM_NAME}" <${config.MAIL_FROM}>`,
-      } as SMTPTransport.Options);
-
+      const mailerTransporter = nodemailer.createTransport(mailConfig);
       return mailerTransporter;
     },
   },

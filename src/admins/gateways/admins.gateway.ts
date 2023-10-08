@@ -171,7 +171,7 @@ export class AdminsGateway {
       throw new ForbiddenException(FORBIDDEN);
     }
 
-    const updatedUser = await this.usersService.update(userId, login);
+    const updatedUser = await this.usersService.updateLogin(userId, login);
 
     this.server.emit(WsOutgoingAdminEvent.UPDATE_USER, updatedUser);
   }
