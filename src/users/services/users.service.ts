@@ -131,14 +131,6 @@ export class UsersService {
   }
 
   // -------------------------------------------------------------
-  public async verifyRecoveryToken(
-    userId: string,
-    recoveryToken: string,
-  ): Promise<boolean> {
-    return !!this.findOne({ id: userId, recoveryToken: recoveryToken });
-  }
-
-  // -------------------------------------------------------------
   public async isUserExist(userId: string, roles: Role[]): Promise<boolean> {
     const user = await this.findOne({ id: userId });
 

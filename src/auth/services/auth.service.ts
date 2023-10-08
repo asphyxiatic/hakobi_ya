@@ -191,4 +191,15 @@ export class AuthService {
 
     return { accessToken: accessToken, refreshToken: refreshToken };
   }
+
+  // -------------------------------------------------------------
+  public async validateRecoveryToken(
+    userId: string,
+    recoveryToken: string,
+  ): Promise<boolean> {
+    return !!this.usersService.findOne({
+      id: userId,
+      recoveryToken: recoveryToken,
+    });
+  }
 }

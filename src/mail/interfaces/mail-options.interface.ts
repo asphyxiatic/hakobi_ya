@@ -1,4 +1,6 @@
+import { MailTemplates } from '../enums/mail-templates.enums.js';
+
 export interface MailOptions {
-  template?: string;
+  template?: MailTemplates;
   data?: Record<string, any>;
 }

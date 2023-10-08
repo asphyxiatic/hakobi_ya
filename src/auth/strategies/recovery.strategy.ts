@@ -7,10 +7,14 @@ import { UsersService } from '../../users/services/users.service.js';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { FORBIDDEN } from '../../common/errors/errors.constants.js';
 import { Request } from 'express';
+import { AuthService } from '../services/auth.service.js';
 
 @Injectable()
 export class RecoveryStrategy extends PassportStrategy(Strategy, 'recovery') {
-  constructor(private readonly usersService: UsersService) {
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly authService: AuthService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -32,7 +36,7 @@ export class RecoveryStrategy extends PassportStrategy(Strategy, 'recovery') {
 
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request);
 
-    const isValidRecoveryToken = await this.usersService.verifyRecoveryToken(
+    const isValidRecoveryToken = await this.authService.validateRecoveryToken(
       payload.userId,
       token,
     );
