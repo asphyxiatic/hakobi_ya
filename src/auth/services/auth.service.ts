@@ -24,7 +24,9 @@ import {
 export class AuthService {
   private readonly JWT_ACCESS_SECRET = config.JWT_ACCESS_SECRET_KEY;
   private readonly JWT_REFRESH_SECRET = config.JWT_REFRESH_SECRET_KEY;
+  private readonly JWT_RECOVERY_SECRET = config.JWT_RECOVERY_SECRET_KEY;
   private readonly JWT_ACCESS_EXPIRES = '60d';
+  private readonly JWT_RECOVERY_EXPIRES = '5m';
   private readonly JWT_REFRESH_EXPIRES = '60d';
 
   constructor(
@@ -102,6 +104,29 @@ export class AuthService {
   }
 
   //-------------------------------------------------------------------------
+  public async createRecoveryToken(
+    userId: string,
+    login: string,
+    roles: Role[],
+  ): Promise<string> {
+    const tokenPayload: JwtTokenPayload = {
+      userId: userId,
+      roles: roles,
+      login: login,
+    };
+
+    const recoveryToken = await this.jwtToolsService.createToken(
+      tokenPayload,
+      this.JWT_RECOVERY_SECRET,
+      this.JWT_RECOVERY_EXPIRES,
+    );
+
+    await this.usersService.setRecoveryToken(userId, recoveryToken);
+
+    return recoveryToken;
+  }
+
+  //-------------------------------------------------------------------------
   private async createPairTokens(
     userId: string,
     login: string,
@@ -109,8 +134,8 @@ export class AuthService {
   ): Promise<TokensResponse> {
     const tokenPayload: JwtTokenPayload = {
       userId: userId,
-      roles: roles,
       login: login,
+      roles: roles,
     };
 
     const accessToken = await this.jwtToolsService.createToken(

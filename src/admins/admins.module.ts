@@ -9,4 +9,4 @@ import { UsersModule } from '../users/users.module.js';
   imports: [AuthModule, StreetsModule, HousesModule, UsersModule],
   providers: [AdminsGateway],
 })
-export class AdminModule {}
+export class AdminsModule {}

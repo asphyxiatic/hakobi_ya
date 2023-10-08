@@ -96,6 +96,17 @@ export class UsersService {
   }
 
   // -------------------------------------------------------------
+  public async setRecoveryToken(
+    userId: string,
+    recoveryToken: string,
+  ): Promise<void> {
+    await this.usersRepository.save({
+      id: userId,
+      recoveryToken: recoveryToken,
+    });
+  }
+
+  // -------------------------------------------------------------
   public async isUserExist(userId: string, roles: Role[]): Promise<boolean> {
     const user = await this.findOne({ id: userId });
 

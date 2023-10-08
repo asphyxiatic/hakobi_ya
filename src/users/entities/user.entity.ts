@@ -14,6 +14,14 @@ export class UserEntity extends BaseEntity {
   password!: string;
 
   @Column({
+    name: 'recovery_token',
+    type: 'varchar',
+    default: null,
+    nullable: true,
+  })
+  recoveryToken!: string | null;
+
+  @Column({
     type: 'enum',
     enum: Role,
     array: true,
