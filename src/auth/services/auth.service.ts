@@ -77,9 +77,9 @@ export class AuthService {
 
     const password = passwordGenerator.generate({ length: 8, numbers: true });
 
-    await this.usersService.create(login, password);
+    const newUser = await this.usersService.create(login, password);
 
-    return { login: login, password: password };
+    return { id: newUser.id, login: newUser.login, password: password };
   }
 
   //-------------------------------------------------------------

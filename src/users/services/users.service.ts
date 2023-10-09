@@ -13,6 +13,7 @@ import {
   FAILED_SAVE_USER,
   USER_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
+import { UpdateLoginResponse } from '../interfaces/update-login-response.interface.js';
 
 @Injectable()
 export class UsersService {
@@ -82,12 +83,20 @@ export class UsersService {
   }
 
   // -------------------------------------------------------------
-  public async updateLogin(userId: string, login: string): Promise<UserEntity> {
+  public async updateLogin(
+    userId: string,
+    login: string,
+  ): Promise<UpdateLoginResponse> {
     const user = await this.findById(userId);
 
     if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
-    return this.save({ id: user.id, login: login });
+    const updatedUser = await this.save({ id: user.id, login: login });
+
+    return {
+      id: updatedUser.id,
+      login: updatedUser.login,
+    };
   }
 
   public async updatePassword(

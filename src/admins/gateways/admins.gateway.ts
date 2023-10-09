@@ -54,21 +54,8 @@ export class AdminsGateway {
   @WebSocketServer() server: Server;
 
   //----------------------------------------------------------
-  @SubscribeMessage(WsIncomingAdminEvent.REGISTER_USER)
-  async register(
-    @MessageBody() { login }: RegisterUserDto,
-    @ConnectedSocket() client: Socket,
-  ): Promise<void> {
-    const newUser = await this.authService.registerUser(login);
-
-    client.emit(WsOutgoingAdminEvent.REGISTER_USER_CREDENTIALS, newUser);
-
-    this.server.emit(WsOutgoingAdminEvent.REGISTER_USER, newUser.login);
-  }
-
-  //----------------------------------------------------------
   @SubscribeMessage(WsIncomingAdminEvent.CREATE_STREET)
-  async addStreet(
+  async createStreet(
     @MessageBody() { nameStreet }: CreateStreetDto,
   ): Promise<void> {
     const newStreet = await this.streetsService.create(nameStreet);
@@ -129,6 +116,25 @@ export class AdminsGateway {
     await this.housesService.delete(houseIds);
 
     this.server.emit(WsOutgoingAdminEvent.DELETE_HOUSES, houseIds);
+  }
+
+  //----------------------------------------------------------
+  @SubscribeMessage(WsIncomingAdminEvent.REGISTER_USER)
+  async register(
+    @MessageBody() { login }: RegisterUserDto,
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    const newUser = await this.authService.registerUser(login);
+
+    client.emit(WsOutgoingAdminEvent.REGISTER_USER_CREDENTIALS, {
+      login: newUser.login,
+      password: newUser.password,
+    });
+
+    this.server.emit(WsOutgoingAdminEvent.REGISTER_USER, {
+      id: newUser.id,
+      login: newUser.login,
+    });
   }
 
   //----------------------------------------------------------

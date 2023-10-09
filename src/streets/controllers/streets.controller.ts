@@ -7,8 +7,8 @@ import { HttpAtGuard } from '../../auth/guards/http-at.guard.js';
 export class StreetsController {
   constructor(private readonly streetsService: StreetsService) {}
 
-  @Get()
   @UseGuards(HttpAtGuard)
+  @Get()
   async getFullStreetInformation(): Promise<StreetEntity[]> {
     return this.streetsService.getFullStreetInformation();
   }

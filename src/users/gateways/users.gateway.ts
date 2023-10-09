@@ -67,7 +67,9 @@ export class UsersGateway implements OnGatewayConnection, OnGatewayDisconnect {
       );
 
       console.log(
-        `Connection ${userOnlineStatus.login}, online_status: ${userOnlineStatus.online}`,
+        `Connection ${userOnlineStatus.login}, online_status: ${
+          userOnlineStatus.online
+        }, roles: ${userOnlineStatus.roles.join(', ')}`,
       );
 
       this.server.emit(

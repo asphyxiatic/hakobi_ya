@@ -14,9 +14,6 @@ export class StreetEntity extends BaseEntity {
   })
   nameStreet!: string;
 
-  @Column({ name: 'owner_id', type: 'uuid', nullable: false })
-  ownerId!: UserEntity['id'];
-
   @OneToMany(() => HouseEntity, (house) => house.street)
   houses!: Relation<HouseEntity[]>;
 }

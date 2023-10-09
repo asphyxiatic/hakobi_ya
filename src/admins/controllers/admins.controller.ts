@@ -7,9 +7,7 @@ export class AdminsController {
   constructor(private readonly adminsService: AdminsService) {}
 
   @Post('send-password-reset-email')
-  async sendPasswordResetEmail(
-    @Body() { login }: SendPasswordResetEmailDto,
-  ) {
+  async sendPasswordResetEmail(@Body() { login }: SendPasswordResetEmailDto) {
     return this.adminsService.sendPasswordResetEmail(login);
   }
 }
