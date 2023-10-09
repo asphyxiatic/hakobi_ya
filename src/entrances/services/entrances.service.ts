@@ -20,6 +20,15 @@ export class EntrancesService {
     return this.entrancesRepository.findOne({ where: findOptions });
   }
 
+  // ----------------------------------------------------------------------
+  public async save(
+    saveOptions: Partial<EntranceEntity>,
+  ): Promise<EntranceEntity> {
+    const savedEntrance = await this.entrancesRepository.save(saveOptions);
+
+    return this.findOne({ id: savedEntrance.id });
+  }
+
   // ---------------------------------------------------------------
   public async createEntrancesForHouse(
     houseId: string,
@@ -29,7 +38,7 @@ export class EntrancesService {
 
     for (let numberEntrance = 1; numberEntrance <= quantity; numberEntrance++) {
       entrances.push(
-        await this.entrancesRepository.save({
+        await this.save({
           houseId: houseId,
           numberEntrance: numberEntrance,
         }),
@@ -62,7 +71,7 @@ export class EntrancesService {
         numberEntrance <= updatedQuantity;
         numberEntrance++
       ) {
-        await this.entrancesRepository.save({
+        await this.save({
           houseId: houseId,
           numberEntrance: numberEntrance,
         });
@@ -89,7 +98,7 @@ export class EntrancesService {
 
     if (!entrance) throw new NotFoundException(ENTRANCE_NOT_FOUND);
 
-    const updatedСonditionEntrance = await this.entrancesRepository.save({
+    const updatedСonditionEntrance = await this.save({
       id: entrance.id,
       houseId: houseId,
       completed: complete,

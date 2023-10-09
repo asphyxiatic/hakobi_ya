@@ -3,7 +3,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { HouseEntity } from '../entities/house.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntrancesService } from '../../entrances/services/entrances.service.js';
@@ -23,13 +23,27 @@ export class HousesService {
     private readonly entrancesService: EntrancesService,
   ) {}
 
+  //-------------------------------------------------------------
+  public async findOne(
+    findOptions: FindOptionsWhere<HouseEntity>,
+  ): Promise<HouseEntity> {
+    return this.housesRepository.findOne({ where: findOptions });
+  }
+
+  //-------------------------------------------------------------
+  public async save(saveOptions: Partial<HouseEntity>): Promise<HouseEntity> {
+    const savedHouse = await this.housesRepository.save(saveOptions);
+
+    return this.findOne({ id: savedHouse.id });
+  }
+
   //--------------------------------------------------------------------------
   public async create(
     streetId: string,
     houseName: string,
     quantityEntrances: number,
   ): Promise<CreateHouseResponse> {
-    const newHouse = await this.housesRepository.save({
+    const newHouse = await this.save({
       streetId: streetId,
       houseName: houseName,
     });
@@ -63,7 +77,7 @@ export class HousesService {
     let updateHouse = house;
 
     if (houseName) {
-      updateHouse = await this.housesRepository.save({
+      updateHouse = await this.save({
         id: houseId,
         houseName: houseName,
       });

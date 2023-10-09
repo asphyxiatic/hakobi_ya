@@ -23,13 +23,13 @@ export class WsAtStrategy extends PassportStrategy(Strategy, 'ws') {
       payload.roles,
     );
 
+    if (!isUserExist) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
+
     const userFromJwt: UserFromJwt = {
       userId: payload.userId,
       login: payload.login,
       roles: payload.roles,
     };
-
-    if (!isUserExist) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
 
     return userFromJwt;
   }

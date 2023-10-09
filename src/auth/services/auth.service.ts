@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../../users/services/users.service.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
@@ -17,6 +18,7 @@ import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { Role } from '../../users/enums/role.enum.js';
 import {
   EMAIL_USER_CONFLICT,
+  UNAUTHORIZED_RESOURCE,
   USER_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
 
@@ -124,6 +126,29 @@ export class AuthService {
     await this.usersService.setRecoveryToken(userId, recoveryToken);
 
     return recoveryToken;
+  }
+
+  //-------------------------------------------------------------
+  public async validateAtToken(token: string): Promise<UserFromJwt> {
+    const payload: JwtTokenPayload = await this.jwtToolsService.decodeToken(
+      token,
+      this.JWT_ACCESS_SECRET,
+    );
+
+    const isUserExist = await this.usersService.isUserExist(
+      payload.userId,
+      payload.roles,
+    );
+
+    if (!isUserExist) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
+
+    const userFromJwt: UserFromJwt = {
+      userId: payload.userId,
+      login: payload.login,
+      roles: payload.roles,
+    };
+
+    return userFromJwt;
   }
 
   // -------------------------------------------------------------

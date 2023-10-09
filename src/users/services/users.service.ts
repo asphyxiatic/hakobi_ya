@@ -36,6 +36,13 @@ export class UsersService {
   }
 
   //-------------------------------------------------------------
+  public async save(saveOptions: Partial<UserEntity>): Promise<UserEntity> {
+    const savedUser = await this.usersRepository.save(saveOptions);
+
+    return this.findOne({ id: savedUser.id });
+  }
+
+  //-------------------------------------------------------------
   public async findById(userId: string): Promise<UserEntity> {
     return this.findOne({ id: userId });
   }
@@ -49,6 +56,8 @@ export class UsersService {
   public async findAdminByLogin(login: string): Promise<UserEntity> {
     const user = await this.findOne({ login: login });
 
+    if (!user) throw new NotFoundException(USER_NOT_FOUND);
+
     const isAdmin = user.roles.includes(Role.admin);
 
     if (!isAdmin) return undefined;
@@ -61,7 +70,7 @@ export class UsersService {
     try {
       const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
 
-      const newUser = await this.usersRepository.save({
+      const newUser = await this.save({
         login: login,
         password: hashedPassword,
       });
@@ -78,7 +87,7 @@ export class UsersService {
 
     if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
-    return this.usersRepository.save({ id: user.id, login: login });
+    return this.save({ id: user.id, login: login });
   }
 
   public async updatePassword(
@@ -91,7 +100,7 @@ export class UsersService {
 
     const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
 
-    return this.usersRepository.save({ id: user.id, password: hashedPassword });
+    return this.save({ id: user.id, password: hashedPassword });
   }
 
   // -------------------------------------------------------------
@@ -124,7 +133,7 @@ export class UsersService {
     userId: string,
     recoveryToken: string,
   ): Promise<void> {
-    await this.usersRepository.save({
+    await this.save({
       id: userId,
       recoveryToken: recoveryToken,
     });
@@ -144,6 +153,17 @@ export class UsersService {
   }
 
   // -------------------------------------------------------------
+  public async setOnlineStatus(
+    userId: string,
+    onlineStatus: boolean,
+  ): Promise<UserEntity> {
+    return this.save({
+      id: userId,
+      online: onlineStatus,
+    });
+  }
+
+  // -------------------------------------------------------------
   public async enableActivityUser(userId: string): Promise<void> {
     const user = await this.findById(userId);
 
@@ -156,7 +176,7 @@ export class UsersService {
 
       userRoles.push(Role.user);
 
-      await this.usersRepository.save({
+      await this.save({
         id: userId,
         roles: userRoles,
       });
@@ -176,7 +196,7 @@ export class UsersService {
 
       userRoles.push(Role.guest);
 
-      await this.usersRepository.save({
+      await this.save({
         id: userId,
         roles: userRoles,
       });

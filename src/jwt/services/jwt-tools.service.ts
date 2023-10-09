@@ -1,6 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
-import { DecodeTokenResponse } from '../interfaces/decode-token-result.interface.js';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtTokenPayload } from '../interfaces/token-payload.interface.js';
 import { INVALID_JWT_TOKEN } from '../../common/errors/errors.constants.js';
 
@@ -26,15 +25,15 @@ export class JwtToolsService {
   public async decodeToken(
     token: string,
     secret: string,
-  ): Promise<DecodeTokenResponse> {
+  ): Promise<JwtTokenPayload> {
     const decodeToken: JwtTokenPayload = await this.jwtService
       .verifyAsync(token, { secret: secret })
       .catch((error: any) => {
-        throw new InternalServerErrorException(INVALID_JWT_TOKEN);
+        throw new UnauthorizedException(INVALID_JWT_TOKEN);
       });
 
     return {
-      id: decodeToken.userId,
+      userId: decodeToken.userId,
       login: decodeToken.login,
       roles: decodeToken.roles,
     };

@@ -32,9 +32,7 @@ export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
       payload.roles,
     );
 
-    if (!isUserExist) {
-      throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
-    }
+    if (!isUserExist) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
 
     const userFromJwt: UserFromJwt = {
       userId: payload.userId,

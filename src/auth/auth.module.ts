@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AuthService } from './services/auth.service.js';
 import { AuthController } from './controllers/auth.controller.js';
 import { JwtToolsModule } from '../jwt/jwt-tools.module.js';
@@ -11,6 +11,7 @@ import { RtStrategy } from './strategies/rt.strategy.js';
 import { WsAtStrategy } from './strategies/ws-at.strategy.js';
 import { RecoveryStrategy } from './strategies/recovery.strategy.js';
 
+@Global()
 @Module({
   imports: [JwtToolsModule, UsersModule, TokensModule, EncryptionModule],
   controllers: [AuthController],
