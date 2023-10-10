@@ -38,6 +38,7 @@ import { UpdateUserDto } from '../dto/update-user.dto.js';
 import { DeleteUsersDto } from '../dto/delete-users.dto.js';
 import { UpdateStreetsDto } from '../dto/update-street.dto.js';
 import { FORBIDDEN } from '../../common/errors/errors.constants.js';
+import { RegisterUserWsEventResponse } from '../interfaces/register-user-ws-event-response.interface.js';
 
 @UsePipes(new ValidationPipe())
 @UseGuards(WsRoleGuard([Role.admin]))
@@ -126,15 +127,17 @@ export class AdminsGateway {
   ): Promise<void> {
     const newUser = await this.authService.registerUser(login);
 
-    client.emit(WsOutgoingAdminEvent.REGISTER_USER_CREDENTIALS, {
-      login: newUser.login,
-      password: newUser.password,
-    });
+    client.emit(
+      WsOutgoingAdminEvent.REGISTER_USER_CREDENTIALS,
+      newUser.credentials,
+    );
 
-    this.server.emit(WsOutgoingAdminEvent.REGISTER_USER, {
+    const registerUser: RegisterUserWsEventResponse = {
       id: newUser.id,
-      login: newUser.login,
-    });
+      login: newUser.credentials.login,
+    };
+
+    this.server.emit(WsOutgoingAdminEvent.REGISTER_USER, registerUser);
   }
 
   //----------------------------------------------------------

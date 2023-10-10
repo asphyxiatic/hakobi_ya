@@ -1,10 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { TokenEntity } from '../entities/token.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EncryptionService } from '../../encryption/services/encryption.service.js';
 import * as bcrypt from 'bcrypt';
-import { ValidateTokenOptions } from '../interfaces/validate-token-options.interface.js';
 
 @Injectable()
 export class TokensService {

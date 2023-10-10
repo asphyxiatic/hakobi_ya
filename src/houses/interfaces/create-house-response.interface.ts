@@ -1,4 +1,4 @@
-import { EntrancesResponse } from './entrances-response.interface.js';
+import { EntrancesResponse } from '../../entrances/interfaces/entrances-response.interface.js';
 
 export interface CreateHouseResponse {
   id: string;

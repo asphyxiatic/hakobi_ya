@@ -3,8 +3,8 @@ import { FindOptionsWhere, Repository } from 'typeorm';
 import { EntranceEntity } from '../entities/entrance.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SettingСompletionEntranceResponse } from '../interfaces/setting-completion-entrance-response.interface.js';
-import { HouseEntity } from '../../houses/entities/house.entity.js';
 import { ENTRANCE_NOT_FOUND } from '../../common/errors/errors.constants.js';
+import { EntrancesResponse } from '../interfaces/entrances-response.interface.js';
 
 @Injectable()
 export class EntrancesService {
@@ -21,7 +21,7 @@ export class EntrancesService {
   }
 
   // ----------------------------------------------------------------------
-  public async save(
+  public async saveAndGet(
     saveOptions: Partial<EntranceEntity>,
   ): Promise<EntranceEntity> {
     const savedEntrance = await this.entrancesRepository.save(saveOptions);
@@ -33,16 +33,19 @@ export class EntrancesService {
   public async createEntrancesForHouse(
     houseId: string,
     quantity: number,
-  ): Promise<EntranceEntity[]> {
-    const entrances: EntranceEntity[] = [];
+  ): Promise<EntrancesResponse[]> {
+    const entrances: EntrancesResponse[] = [];
 
     for (let numberEntrance = 1; numberEntrance <= quantity; numberEntrance++) {
-      entrances.push(
-        await this.save({
-          houseId: houseId,
-          numberEntrance: numberEntrance,
-        }),
-      );
+      const newEntrance = await this.entrancesRepository.save({
+        houseId: houseId,
+        numberEntrance: numberEntrance,
+      });
+
+      entrances.push({
+        numberEntrance: newEntrance.numberEntrance,
+        completed: newEntrance.completed,
+      } as EntrancesResponse);
     }
 
     return entrances;
@@ -52,7 +55,7 @@ export class EntrancesService {
   public async updateEntrancesForHouse(
     houseId: string,
     updatedQuantity: number,
-  ): Promise<EntranceEntity[]> {
+  ): Promise<EntrancesResponse[]> {
     const countEntrancesForHouse = await this.entrancesRepository.count({
       where: { houseId: houseId },
     });
@@ -71,7 +74,7 @@ export class EntrancesService {
         numberEntrance <= updatedQuantity;
         numberEntrance++
       ) {
-        await this.save({
+        await this.entrancesRepository.save({
           houseId: houseId,
           numberEntrance: numberEntrance,
         });
@@ -80,6 +83,7 @@ export class EntrancesService {
 
     const entrances = await this.entrancesRepository.find({
       where: { houseId: houseId },
+      select: ['completed', 'numberEntrance'] as (keyof EntrancesResponse)[],
     });
 
     return entrances;
@@ -98,7 +102,7 @@ export class EntrancesService {
 
     if (!entrance) throw new NotFoundException(ENTRANCE_NOT_FOUND);
 
-    const updatedСonditionEntrance = await this.save({
+    const updatedСonditionEntrance = await this.entrancesRepository.save({
       id: entrance.id,
       houseId: houseId,
       completed: complete,

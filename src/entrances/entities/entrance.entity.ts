@@ -7,18 +7,18 @@ const tableName = 'entrances';
 @Entity(tableName)
 export class EntranceEntity extends BaseEntity {
   @Column({ name: 'number_entrance', type: 'integer', nullable: false })
-  numberEntrance!: number;
+    numberEntrance!: number;
 
   @Column({ type: 'boolean', default: false, nullable: false })
-  completed!: boolean;
+    completed!: boolean;
 
   @Column({ name: 'house_id', type: 'uuid', nullable: false })
-  houseId!: HouseEntity['id'];
+    houseId!: HouseEntity['id'];
 
   @ManyToOne(() => HouseEntity, (house) => house.entrances, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'house_id' })
-  house!: Relation<HouseEntity>;
+    house!: Relation<HouseEntity>;
 }

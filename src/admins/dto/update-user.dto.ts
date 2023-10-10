@@ -3,9 +3,9 @@ import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 export class UpdateUserDto {
   @IsUUID()
   @IsNotEmpty()
-  userId!: string;
+    userId!: string;
 
   @IsString()
   @IsNotEmpty()
-  login!: string;
+    login!: string;
 }

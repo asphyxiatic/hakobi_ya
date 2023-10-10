@@ -8,13 +8,13 @@ const tableName = 'users';
 @Entity(tableName)
 export class UserEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: false, unique: true })
-  login!: string;
+    login!: string;
 
   @Column({ type: 'varchar', nullable: false })
-  password!: string;
+    password!: string;
 
   @Column({ type: 'boolean', default: false, nullable: false })
-  online!: boolean;
+    online!: boolean;
 
   @Column({
     name: 'recovery_token',
@@ -22,7 +22,7 @@ export class UserEntity extends BaseEntity {
     default: null,
     nullable: true,
   })
-  recoveryToken!: string | null;
+    recoveryToken!: string | null;
 
   @Column({
     type: 'enum',
@@ -30,8 +30,8 @@ export class UserEntity extends BaseEntity {
     array: true,
     default: [Role.user],
   })
-  roles!: Role[];
+    roles!: Role[];
 
   @OneToMany(() => TokenEntity, (token) => token.user)
-  tokens!: Relation<TokenEntity[]>;
+    tokens!: Relation<TokenEntity[]>;
 }

@@ -6,11 +6,11 @@ import {
 
 export class BaseEntity {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+    id!: string;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt!: string;
+    createdAt!: string;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt!: string;
+    updatedAt!: string;
 }

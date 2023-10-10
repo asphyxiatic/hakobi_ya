@@ -34,7 +34,7 @@ export class StreetsService {
   }
 
   // ----------------------------------------------------------------------
-  public async save(saveOptions: Partial<StreetEntity>): Promise<StreetEntity> {
+  public async saveAndGet(saveOptions: Partial<StreetEntity>): Promise<StreetEntity> {
     const savedStreet = await this.streetsRepository.save(saveOptions);
 
     return this.findOne({ id: savedStreet.id });
@@ -42,7 +42,7 @@ export class StreetsService {
 
   // ----------------------------------------------------------------------
   public async create(nameStreet: string): Promise<StreetEntity> {
-    return this.save({ nameStreet: nameStreet });
+    return this.saveAndGet({ nameStreet: nameStreet });
   }
 
   // ----------------------------------------------------------------------
@@ -54,7 +54,7 @@ export class StreetsService {
 
     if (!street) throw new NotFoundException(STREET_NOT_FOUND);
 
-    return this.save({
+    return this.saveAndGet({
       id: streetId,
       nameStreet: nameStreet,
     });

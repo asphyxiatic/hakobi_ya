@@ -9,13 +9,13 @@ import {
 export class UpdateHouseDto {
   @IsUUID()
   @IsNotEmpty()
-  houseId!: string;
+    houseId!: string;
 
   @IsString()
   @IsOptional()
-  houseName?: string;
+    houseName?: string;
 
   @IsInt()
   @IsOptional()
-  quantityEntrances?: number;
+    quantityEntrances?: number;
 }

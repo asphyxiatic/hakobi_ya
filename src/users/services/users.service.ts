@@ -14,6 +14,7 @@ import {
   USER_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
 import { UpdateLoginResponse } from '../interfaces/update-login-response.interface.js';
+import { SetOnlineStatusResponse } from '../interfaces/set-online-status-response.interface.js';
 
 @Injectable()
 export class UsersService {
@@ -37,7 +38,9 @@ export class UsersService {
   }
 
   //-------------------------------------------------------------
-  public async save(saveOptions: Partial<UserEntity>): Promise<UserEntity> {
+  public async saveAndGet(
+    saveOptions: Partial<UserEntity>,
+  ): Promise<UserEntity> {
     const savedUser = await this.usersRepository.save(saveOptions);
 
     return this.findOne({ id: savedUser.id });
@@ -71,7 +74,7 @@ export class UsersService {
     try {
       const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
 
-      const newUser = await this.save({
+      const newUser = await this.saveAndGet({
         login: login,
         password: hashedPassword,
       });
@@ -91,7 +94,10 @@ export class UsersService {
 
     if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
-    const updatedUser = await this.save({ id: user.id, login: login });
+    const updatedUser = await this.usersRepository.save({
+      id: user.id,
+      login: login,
+    });
 
     return {
       id: updatedUser.id,
@@ -109,7 +115,7 @@ export class UsersService {
 
     const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
 
-    return this.save({ id: user.id, password: hashedPassword });
+    return this.usersRepository.save({ id: user.id, password: hashedPassword });
   }
 
   // -------------------------------------------------------------
@@ -142,7 +148,7 @@ export class UsersService {
     userId: string,
     recoveryToken: string,
   ): Promise<void> {
-    await this.save({
+    await this.usersRepository.save({
       id: userId,
       recoveryToken: recoveryToken,
     });
@@ -165,11 +171,18 @@ export class UsersService {
   public async setOnlineStatus(
     userId: string,
     onlineStatus: boolean,
-  ): Promise<UserEntity> {
-    return this.save({
+  ): Promise<SetOnlineStatusResponse> {
+    const updatedUser = await this.saveAndGet({
       id: userId,
       online: onlineStatus,
     });
+
+    return {
+      id: updatedUser.id,
+      login: updatedUser.login,
+      online: updatedUser.online,
+      roles: updatedUser.roles,
+    };
   }
 
   // -------------------------------------------------------------
@@ -185,7 +198,7 @@ export class UsersService {
 
       userRoles.push(Role.user);
 
-      await this.save({
+      await this.usersRepository.save({
         id: userId,
         roles: userRoles,
       });
@@ -205,7 +218,7 @@ export class UsersService {
 
       userRoles.push(Role.guest);
 
-      await this.save({
+      await this.usersRepository.save({
         id: userId,
         roles: userRoles,
       });

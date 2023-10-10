@@ -15,18 +15,18 @@ const tableName = 'houses';
 @Entity(tableName)
 export class HouseEntity extends BaseEntity {
   @Column({ name: 'house_name', type: 'varchar', nullable: false })
-  houseName!: string;
+    houseName!: string;
 
   @Column({ name: 'street_id', type: 'uuid', nullable: false })
-  streetId!: StreetEntity['id'];
+    streetId!: StreetEntity['id'];
 
   @OneToMany(() => EntranceEntity, (entrance) => entrance.house)
-  entrances!: Relation<EntranceEntity[]>;
+    entrances!: Relation<EntranceEntity[]>;
 
   @ManyToOne(() => StreetEntity, (street) => street.houses, {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'street_id' })
-  street!: Relation<StreetEntity>;
+    street!: Relation<StreetEntity>;
 }

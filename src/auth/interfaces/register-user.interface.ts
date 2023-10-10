@@ -1,5 +1,8 @@
 export interface RegisterUserResponse {
   id: string;
-  login: string;
-  password: string;
+
+  credentials: {
+    login: string;
+    password: string;
+  };
 }

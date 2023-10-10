@@ -3,9 +3,9 @@ import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 export class UpdateStreetsDto {
   @IsUUID()
   @IsNotEmpty()
-  streetId!: string;
+    streetId!: string;
 
   @IsString()
   @IsNotEmpty()
-  nameStreet!: string;
+    nameStreet!: string;
 }

@@ -3,7 +3,6 @@ import { AuthService } from '../../auth/services/auth.service.js';
 import { MailService } from '../../mail/services/mail.service.js';
 import { UsersService } from '../../users/services/users.service.js';
 import { ADMIN_NOT_FOUND } from '../../common/errors/errors.constants.js';
-import { join } from 'path';
 import { MailTemplates } from '../../mail/enums/mail-templates.enums.js';
 
 @Injectable()

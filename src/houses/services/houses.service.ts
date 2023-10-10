@@ -31,7 +31,9 @@ export class HousesService {
   }
 
   //-------------------------------------------------------------
-  public async save(saveOptions: Partial<HouseEntity>): Promise<HouseEntity> {
+  public async saveAndGet(
+    saveOptions: Partial<HouseEntity>,
+  ): Promise<HouseEntity> {
     const savedHouse = await this.housesRepository.save(saveOptions);
 
     return this.findOne({ id: savedHouse.id });
@@ -43,7 +45,7 @@ export class HousesService {
     houseName: string,
     quantityEntrances: number,
   ): Promise<CreateHouseResponse> {
-    const newHouse = await this.save({
+    const newHouse = await this.housesRepository.save({
       streetId: streetId,
       houseName: houseName,
     });
@@ -67,23 +69,25 @@ export class HousesService {
     houseName,
     quantityEntrances,
   }: UpdateHouseOptions): Promise<UpdateHouseResponse> {
-    const house = await this.housesRepository.findOne({
-      where: { id: houseId },
-      relations: { entrances: true },
-    });
+    const house = await this.housesRepository
+      .createQueryBuilder('home')
+      .select('*')
+      .leftJoinAndSelect('home.entrances', 'entrance')
+      .addSelect('entrance. completed', 'entrance.numberEntrance')
+      .getOne();
 
     if (!house) throw new NotFoundException(HOUSE_NOT_FOUND);
 
     let updateHouse = house;
 
     if (houseName) {
-      updateHouse = await this.save({
+      updateHouse = await this.saveAndGet({
         id: houseId,
         houseName: houseName,
       });
     }
 
-    let updateEntrances = house.entrances;
+    let updateEntrances = house.entrances as any;
 
     if (quantityEntrances) {
       updateEntrances = await this.entrancesService.updateEntrancesForHouse(

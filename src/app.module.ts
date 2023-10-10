@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { StreetsModule } from './streets/streets.module.js';
 import { AdminsModule } from './admins/admins.module.js';
 import { UsersModule } from './users/users.module.js';
+import { AppGateway } from './app.gateway.js';
 
 @Module({
   imports: [
@@ -13,5 +14,6 @@ import { UsersModule } from './users/users.module.js';
     StreetsModule,
     UsersModule,
   ],
+  providers: [AppGateway],
 })
 export class AppModule {}

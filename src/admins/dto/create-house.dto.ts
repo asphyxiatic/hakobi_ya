@@ -3,13 +3,13 @@ import { IsInt, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 export class CreateHouseDto {
   @IsUUID()
   @IsNotEmpty()
-  streetId!: string;
+    streetId!: string;
 
   @IsString()
   @IsNotEmpty()
-  houseName!: string;
+    houseName!: string;
 
   @IsInt()
   @IsNotEmpty()
-  quantityEntrances!: number;
+    quantityEntrances!: number;
 }
