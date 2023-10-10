@@ -26,8 +26,10 @@ export class UsersService {
   ) {}
 
   //-------------------------------------------------------------
-  public async getAllUsers(): Promise<UserEntity[]> {
-    return this.usersRepository.find();
+  public async getAllUsers(): Promise<any> {
+    return this.usersRepository.find({
+      select: ['id', 'login', 'online', 'roles'],
+    });
   }
 
   //-------------------------------------------------------------

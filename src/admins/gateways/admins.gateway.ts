@@ -135,6 +135,7 @@ export class AdminsGateway {
     const registerUser: RegisterUserWsEventResponse = {
       id: newUser.id,
       login: newUser.credentials.login,
+      roles: newUser.roles,
     };
 
     this.server.emit(WsOutgoingAdminEvent.REGISTER_USER, registerUser);

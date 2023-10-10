@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { HttpAtGuard } from '../../auth/guards/http-at.guard.js';
 import { UsersService } from '../services/users.service.js';
-import { UserEntity } from '../entities/user.entity.js';
+import { GetAllUsersResponse } from '../interfaces/get-all-users-response.interface.js';
 
 @Controller('users')
 export class UsersController {
@@ -9,7 +9,7 @@ export class UsersController {
 
   @UseGuards(HttpAtGuard)
   @Get()
-  async getAllUsers(): Promise<UserEntity[]> {
+  async getAllUsers(): Promise<GetAllUsersResponse> {
     return this.usersService.getAllUsers();
   }
 }

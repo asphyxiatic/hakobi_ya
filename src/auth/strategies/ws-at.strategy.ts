@@ -11,7 +11,7 @@ import { UNAUTHORIZED_RESOURCE } from '../../common/errors/errors.constants.js';
 export class WsAtStrategy extends PassportStrategy(Strategy, 'ws') {
   constructor(private readonly userService: UsersService) {
     super({
-      jwtFromRequest: ExtractJwt.fromUrlQueryParameter('bearerToken'),
+      jwtFromRequest: ExtractJwt.fromUrlQueryParameter('token'),
       ignoreExpiration: false,
       secretOrKey: config.JWT_ACCESS_SECRET_KEY,
     } as StrategyOptions);

@@ -17,7 +17,7 @@ import { RegisterUserResponse } from '../interfaces/register-user.interface.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { Role } from '../../users/enums/role.enum.js';
 import {
-  EMAIL_USER_CONFLICT,
+  LOGIN_USER_CONFLICT,
   UNAUTHORIZED_RESOURCE,
   USER_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
@@ -73,7 +73,7 @@ export class AuthService {
   public async registerUser(login: string): Promise<RegisterUserResponse> {
     const user = await this.usersService.findByLogin(login);
 
-    if (user) throw new ConflictException(EMAIL_USER_CONFLICT);
+    if (user) throw new ConflictException(LOGIN_USER_CONFLICT);
 
     const password = passwordGenerator.generate({ length: 8, numbers: true });
 
@@ -81,6 +81,7 @@ export class AuthService {
 
     return {
       id: newUser.id,
+      roles: newUser.roles,
       credentials: {
         login: newUser.login,
         password: password,

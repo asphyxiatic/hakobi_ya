@@ -1,4 +1,8 @@
-import { Inject, InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import Mail from 'nodemailer/lib/mailer/index.js';
 import { MailOptions } from '../interfaces/mail-options.interface.js';
 import { FAILED_SEND_EMAIL } from '../../common/errors/errors.constants.js';
@@ -6,6 +10,7 @@ import Handlebars from 'handlebars';
 import * as fs from 'fs';
 import { join } from 'path';
 
+@Injectable()
 export class MailService {
   private readonly TEMPLATES_PATH = join(__dirname, '../templates');
 

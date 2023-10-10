@@ -29,7 +29,7 @@ implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 
   //-------------------------------------------------------------
   async handleDisconnect(client: Socket) {
-    const token = client.handshake.query.bearerToken as string;
+    const token = client.handshake.query.token as string;
 
     const disconnectingUser = await this.authService.validateAtToken(token);
 
@@ -48,7 +48,7 @@ implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
   //-------------------------------------------------------------
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.query.bearerToken as string;
+      const token = client.handshake.query.token as string;
 
       const joinedUser = await this.authService.validateAtToken(token);
 
