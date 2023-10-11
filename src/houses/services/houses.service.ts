@@ -7,13 +7,13 @@ import { FindOptionsWhere, Repository } from 'typeorm';
 import { HouseEntity } from '../entities/house.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntrancesService } from '../../entrances/services/entrances.service.js';
-import { CreateHouseResponse } from '../interfaces/create-house-response.interface.js';
-import { UpdateHouseResponse } from '../interfaces/update-house-response.interface.js';
 import {
   FAILED_REMOVE_HOUSES,
   HOUSE_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
 import { UpdateHouseOptions } from '../interfaces/update-house-options.interface.js';
+import { HouseResponse } from '../interfaces/house-reaponse.interface.js';
+import { HouseFindOneResponse } from '../interfaces/house-find-one-response.interface.js';
 
 @Injectable()
 export class HousesService {
@@ -24,19 +24,35 @@ export class HousesService {
   ) {}
 
   //-------------------------------------------------------------
-  public async findOne(
-    findOptions: FindOptionsWhere<HouseEntity>,
-  ): Promise<HouseEntity> {
-    return this.housesRepository.findOne({ where: findOptions });
+  public async findOneWithRelations(
+    findOptions: FindOptionsWhere<HouseResponse>,
+  ): Promise<HouseResponse> {
+    return this.housesRepository
+      .createQueryBuilder('house')
+      .leftJoinAndSelect('house.entrances', 'entrances')
+      .select(['house.id', 'houses.houseName'])
+      .addSelect(['entrances.numberEntrance', 'entrances.completed'])
+      .where(findOptions)
+      .getOne();
   }
 
   //-------------------------------------------------------------
-  public async saveAndGet(
-    saveOptions: Partial<HouseEntity>,
+  public async findOne(
+    findOptions: FindOptionsWhere<HouseFindOneResponse>,
   ): Promise<HouseEntity> {
+    return this.housesRepository.findOne({
+      where: findOptions,
+      select: ['id', 'houseName'],
+    });
+  }
+
+  //-------------------------------------------------------------
+  public async saveAndSelect(
+    saveOptions: Partial<HouseResponse>,
+  ): Promise<HouseResponse> {
     const savedHouse = await this.housesRepository.save(saveOptions);
 
-    return this.findOne({ id: savedHouse.id });
+    return this.findOneWithRelations({ id: savedHouse.id });
   }
 
   //--------------------------------------------------------------------------
@@ -44,21 +60,20 @@ export class HousesService {
     streetId: string,
     houseName: string,
     quantityEntrances: number,
-  ): Promise<CreateHouseResponse> {
-    const newHouse = await this.housesRepository.save({
+  ): Promise<HouseResponse> {
+    const createdHouse = await this.housesRepository.save({
       streetId: streetId,
       houseName: houseName,
     });
 
     const entrances = await this.entrancesService.createEntrancesForHouse(
-      newHouse.id,
+      createdHouse.id,
       quantityEntrances,
     );
 
     return {
-      id: newHouse.id,
-      houseName: newHouse.houseName,
-      streetId: newHouse.streetId,
+      id: createdHouse.id,
+      houseName: createdHouse.houseName,
       entrances: entrances,
     };
   }
@@ -68,38 +83,25 @@ export class HousesService {
     houseId,
     houseName,
     quantityEntrances,
-  }: UpdateHouseOptions): Promise<UpdateHouseResponse> {
-    const house = await this.housesRepository
-      .createQueryBuilder('home')
-      .select('*')
-      .leftJoinAndSelect('home.entrances', 'entrance')
-      .addSelect('entrance. completed', 'entrance.numberEntrance')
-      .getOne();
+  }: UpdateHouseOptions): Promise<HouseResponse> {
+    const house = await this.findOneWithRelations({ id: houseId });
 
     if (!house) throw new NotFoundException(HOUSE_NOT_FOUND);
 
-    let updateHouse = house;
+    const updateHouse = houseName
+      ? await this.saveAndSelect({ id: houseId, houseName })
+      : house;
 
-    if (houseName) {
-      updateHouse = await this.saveAndGet({
-        id: houseId,
-        houseName: houseName,
-      });
-    }
-
-    let updateEntrances = house.entrances as any;
-
-    if (quantityEntrances) {
-      updateEntrances = await this.entrancesService.updateEntrancesForHouse(
+    const updateEntrances = quantityEntrances
+      ? await this.entrancesService.updateEntrancesForHouse(
         houseId,
         quantityEntrances,
-      );
-    }
+      )
+      : house.entrances;
 
     return {
       id: updateHouse.id,
       houseName: updateHouse.houseName,
-      streetId: updateHouse.streetId,
       entrances: updateEntrances,
     };
   }

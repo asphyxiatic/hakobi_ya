@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { StreetsService } from '../services/streets.service.js';
-import { StreetEntity } from '../entities/street.entity.js';
 import { HttpAtGuard } from '../../auth/guards/http-at.guard.js';
+import { StreetResponse } from '../interfaces/street-response.interface.js';
 
 @Controller('streets')
 export class StreetsController {
@@ -9,7 +9,7 @@ export class StreetsController {
 
   @UseGuards(HttpAtGuard)
   @Get()
-  async getFullStreetInformation(): Promise<StreetEntity[]> {
-    return this.streetsService.getFullStreetInformation();
+  async getFullStreetInformation(): Promise<StreetResponse[]> {
+    return this.streetsService.getAllStreet();
   }
 }

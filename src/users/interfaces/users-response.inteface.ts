@@ -1,8 +1,8 @@
 import { Role } from '../enums/role.enum';
 
-export interface GetAllUsersResponse {
+export interface UsersResponse {
   id: string;
   login: string;
-  roles: Role[];
   online: boolean;
+  roles: Role[];
 }

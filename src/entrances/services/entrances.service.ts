@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { EntranceEntity } from '../entities/entrance.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SettingСompletionEntranceResponse } from '../interfaces/setting-completion-entrance-response.interface.js';
 import { ENTRANCE_NOT_FOUND } from '../../common/errors/errors.constants.js';
-import { EntrancesResponse } from '../interfaces/entrances-response.interface.js';
+import { EntranceResponse } from '../interfaces/entrance-response.interface.js';
+import { EntranceFindOneResponse } from '../interfaces/entrance-find-on-response.interace.js';
 
 @Injectable()
 export class EntrancesService {
@@ -14,38 +14,51 @@ export class EntrancesService {
   ) {}
 
   // ---------------------------------------------------------------
+  public async find(
+    findOptions: FindOptionsWhere<EntranceEntity>,
+  ): Promise<EntranceResponse[]> {
+    return this.entrancesRepository.find({
+      where: findOptions,
+      select: ['numberEntrance', 'completed'],
+    });
+  }
+
+  // ---------------------------------------------------------------
   public async findOne(
     findOptions: FindOptionsWhere<EntranceEntity>,
-  ): Promise<EntranceEntity> {
-    return this.entrancesRepository.findOne({ where: findOptions });
+  ): Promise<EntranceFindOneResponse> {
+    return this.entrancesRepository.findOne({
+      where: findOptions,
+      select: ['id', 'numberEntrance', 'completed'],
+    });
   }
 
   // ----------------------------------------------------------------------
-  public async saveAndGet(
+  public async saveAndSelect(
     saveOptions: Partial<EntranceEntity>,
-  ): Promise<EntranceEntity> {
+  ): Promise<EntranceResponse> {
     const savedEntrance = await this.entrancesRepository.save(saveOptions);
 
-    return this.findOne({ id: savedEntrance.id });
+    return {
+      numberEntrance: savedEntrance.numberEntrance,
+      completed: savedEntrance.completed,
+    };
   }
 
   // ---------------------------------------------------------------
   public async createEntrancesForHouse(
     houseId: string,
     quantity: number,
-  ): Promise<EntrancesResponse[]> {
-    const entrances: EntrancesResponse[] = [];
+  ): Promise<EntranceResponse[]> {
+    const entrances: EntranceResponse[] = [];
 
     for (let numberEntrance = 1; numberEntrance <= quantity; numberEntrance++) {
-      const newEntrance = await this.entrancesRepository.save({
-        houseId: houseId,
-        numberEntrance: numberEntrance,
-      });
-
-      entrances.push({
-        numberEntrance: newEntrance.numberEntrance,
-        completed: newEntrance.completed,
-      } as EntrancesResponse);
+      entrances.push(
+        await this.saveAndSelect({
+          houseId: houseId,
+          numberEntrance: numberEntrance,
+        }),
+      );
     }
 
     return entrances;
@@ -55,7 +68,7 @@ export class EntrancesService {
   public async updateEntrancesForHouse(
     houseId: string,
     updatedQuantity: number,
-  ): Promise<EntrancesResponse[]> {
+  ): Promise<EntranceResponse[]> {
     const countEntrancesForHouse = await this.entrancesRepository.count({
       where: { houseId: houseId },
     });
@@ -64,13 +77,15 @@ export class EntrancesService {
       await this.entrancesRepository
         .createQueryBuilder('entrance')
         .delete()
-        .where('entrance.number_entrance > :quantity', {
-          quantity: updatedQuantity,
+        .where('entrance.numberEntrance > :updatedQuantity', {
+          updatedQuantity: updatedQuantity,
         })
         .execute();
     } else if (countEntrancesForHouse < updatedQuantity) {
+      let numberEntrance = countEntrancesForHouse + 1;
+
       for (
-        let numberEntrance = countEntrancesForHouse + 1;
+        numberEntrance;
         numberEntrance <= updatedQuantity;
         numberEntrance++
       ) {
@@ -81,10 +96,7 @@ export class EntrancesService {
       }
     }
 
-    const entrances = await this.entrancesRepository.find({
-      where: { houseId: houseId },
-      select: ['completed', 'numberEntrance'] as (keyof EntrancesResponse)[],
-    });
+    const entrances = await this.find({ houseId: houseId });
 
     return entrances;
   }
@@ -94,7 +106,7 @@ export class EntrancesService {
     houseId: string,
     numberEntrance: number,
     complete: boolean,
-  ): Promise<SettingСompletionEntranceResponse> {
+  ): Promise<EntranceResponse> {
     const entrance = await this.findOne({
       houseId: houseId,
       numberEntrance: numberEntrance,
@@ -102,16 +114,6 @@ export class EntrancesService {
 
     if (!entrance) throw new NotFoundException(ENTRANCE_NOT_FOUND);
 
-    const updatedСonditionEntrance = await this.entrancesRepository.save({
-      id: entrance.id,
-      houseId: houseId,
-      completed: complete,
-    });
-
-    return {
-      houseId: updatedСonditionEntrance.houseId,
-      numberEntrance: updatedСonditionEntrance.numberEntrance,
-      completed: updatedСonditionEntrance.completed,
-    };
+    return this.saveAndSelect({ id: entrance.id, completed: complete });
   }
 }

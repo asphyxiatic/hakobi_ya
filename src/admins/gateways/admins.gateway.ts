@@ -59,9 +59,9 @@ export class AdminsGateway {
   async createStreet(
     @MessageBody() { nameStreet }: CreateStreetDto,
   ): Promise<void> {
-    const newStreet = await this.streetsService.create(nameStreet);
+    const createdStreet = await this.streetsService.create(nameStreet);
 
-    this.server.emit(WsOutgoingAdminEvent.CREATE_STREET, newStreet);
+    this.server.emit(WsOutgoingAdminEvent.CREATE_STREET, createdStreet);
   }
 
   //----------------------------------------------------------
@@ -151,9 +151,9 @@ export class AdminsGateway {
       throw new ForbiddenException(FORBIDDEN);
     }
 
-    await this.usersService.enableActivityUser(userId);
+    const updatedUser = await this.usersService.enableActivityUser(userId);
 
-    this.server.emit(WsOutgoingAdminEvent.ENABLE_ACTIVITY_USER, userId);
+    this.server.emit(WsOutgoingAdminEvent.ENABLE_ACTIVITY_USER, updatedUser);
   }
 
   //----------------------------------------------------------
@@ -166,9 +166,9 @@ export class AdminsGateway {
       throw new ForbiddenException(FORBIDDEN);
     }
 
-    await this.usersService.disableActivityUser(userId);
+    const updatedUser = await this.usersService.disableActivityUser(userId);
 
-    this.server.emit(WsOutgoingAdminEvent.DISABLE_ACTIVITY_USER, userId);
+    this.server.emit(WsOutgoingAdminEvent.DISABLE_ACTIVITY_USER, updatedUser);
   }
 
   //----------------------------------------------------------
@@ -187,15 +187,17 @@ export class AdminsGateway {
   }
 
   //----------------------------------------------------------
-  @SubscribeMessage(WsIncomingAdminEvent.DELETE_USER)
+  @SubscribeMessage(WsIncomingAdminEvent.DELETE_USERS)
   async deleteUsers(
     @MessageBody() { userIds }: DeleteUsersDto,
     @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
     const userIdsForDelete = userIds.filter((userId) => userId !== user.userId);
 
+    // console.log(userIds);
+
     await this.usersService.delete(userIdsForDelete);
 
-    this.server.emit(WsOutgoingAdminEvent.DELETE_USER, userIds);
+    this.server.emit(WsOutgoingAdminEvent.DELETE_USERS, userIds);
   }
 }

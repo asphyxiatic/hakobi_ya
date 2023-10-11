@@ -10,11 +10,9 @@ import { FindOptionsWhere, Repository } from 'typeorm';
 import { Role } from '../enums/role.enum.js';
 import {
   FAILED_REMOVE_USERS,
-  FAILED_SAVE_USER,
   USER_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
-import { UpdateLoginResponse } from '../interfaces/update-login-response.interface.js';
-import { SetOnlineStatusResponse } from '../interfaces/set-online-status-response.interface.js';
+import { UsersResponse } from '../interfaces/users-response.inteface.js';
 
 @Injectable()
 export class UsersService {
@@ -26,7 +24,7 @@ export class UsersService {
   ) {}
 
   //-------------------------------------------------------------
-  public async getAllUsers(): Promise<any> {
+  public async getAllUsers(): Promise<UsersResponse[]> {
     return this.usersRepository.find({
       select: ['id', 'login', 'online', 'roles'],
     });
@@ -35,89 +33,90 @@ export class UsersService {
   //-------------------------------------------------------------
   public async findOne(
     findOptions: FindOptionsWhere<UserEntity>,
-  ): Promise<UserEntity> {
-    return this.usersRepository.findOne({ where: findOptions });
+  ): Promise<UsersResponse | undefined> {
+    return this.usersRepository.findOne({
+      where: findOptions,
+      select: ['id', 'login', 'online', 'roles'],
+    });
+  }
+
+  public async findOneWithPassword(
+    findOptions: FindOptionsWhere<UserEntity>,
+  ): Promise<(UsersResponse & { password: string }) | undefined> {
+    return this.usersRepository.findOne({
+      where: findOptions,
+      select: ['id', 'login', 'online', 'roles', 'password'],
+    });
   }
 
   //-------------------------------------------------------------
-  public async saveAndGet(
+  public async saveAndSelect(
     saveOptions: Partial<UserEntity>,
-  ): Promise<UserEntity> {
+  ): Promise<UsersResponse> {
     const savedUser = await this.usersRepository.save(saveOptions);
 
     return this.findOne({ id: savedUser.id });
   }
 
   //-------------------------------------------------------------
-  public async findById(userId: string): Promise<UserEntity> {
+  public async findById(userId: string): Promise<UsersResponse | undefined> {
     return this.findOne({ id: userId });
   }
 
   //-------------------------------------------------------------
-  public async findByLogin(login: string): Promise<UserEntity> {
+  public async findByLogin(login: string): Promise<UsersResponse | undefined> {
     return this.usersRepository.findOne({ where: { login: login } });
   }
 
   //-------------------------------------------------------------
-  public async findAdminByLogin(login: string): Promise<UserEntity> {
+  public async findAdminByLogin(
+    login: string,
+  ): Promise<UsersResponse | undefined> {
     const user = await this.findOne({ login: login });
 
-    if (!user) throw new NotFoundException(USER_NOT_FOUND);
+    if (user?.roles.includes(Role.admin)) {
+      return user;
+    }
 
-    const isAdmin = user.roles.includes(Role.admin);
-
-    if (!isAdmin) return undefined;
-
-    return user;
+    return undefined;
   }
 
   //-------------------------------------------------------------
-  public async create(login: string, password: string): Promise<UserEntity> {
-    try {
-      const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
+  public async create(login: string, password: string): Promise<UsersResponse> {
+    const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
 
-      const newUser = await this.saveAndGet({
-        login: login,
-        password: hashedPassword,
-      });
-
-      return newUser;
-    } catch (error: any) {
-      throw new InternalServerErrorException(FAILED_SAVE_USER);
-    }
+    return await this.saveAndSelect({
+      login: login,
+      password: hashedPassword,
+    });
   }
 
   // -------------------------------------------------------------
   public async updateLogin(
     userId: string,
     login: string,
-  ): Promise<UpdateLoginResponse> {
+  ): Promise<UsersResponse> {
     const user = await this.findById(userId);
 
     if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
-    const updatedUser = await this.usersRepository.save({
+    return await this.saveAndSelect({
       id: user.id,
       login: login,
     });
-
-    return {
-      id: updatedUser.id,
-      login: updatedUser.login,
-    };
   }
 
   public async updatePassword(
     userId: string,
     password: string,
-  ): Promise<UserEntity> {
+  ): Promise<UsersResponse> {
     const user = await this.findById(userId);
 
     if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
     const hashedPassword = bcrypt.hashSync(password, this.saltRounds);
 
-    return this.usersRepository.save({ id: user.id, password: hashedPassword });
+    return this.saveAndSelect({ id: user.id, password: hashedPassword });
   }
 
   // -------------------------------------------------------------
@@ -133,14 +132,10 @@ export class UsersService {
   public async findUserForCredentials(
     login: string,
     password: string,
-  ): Promise<UserEntity> {
-    const user = await this.findByLogin(login);
+  ): Promise<UsersResponse> {
+    const user = await this.findOneWithPassword({ login: login });
 
-    if (!user) return undefined;
-
-    const passwordIsValid = bcrypt.compareSync(password, user.password);
-
-    if (!passwordIsValid) return undefined;
+    if (!user || !bcrypt.compareSync(password, user.password)) return undefined;
 
     return user;
   }
@@ -160,47 +155,40 @@ export class UsersService {
   public async isUserExist(userId: string, roles: Role[]): Promise<boolean> {
     const user = await this.findOne({ id: userId });
 
-    if (!user) return false;
-
     const rolesMatch = user.roles.every((role) => roles.includes(role));
 
-    const isUserExist = user && rolesMatch;
+    if (user && rolesMatch) return true;
 
-    return isUserExist;
+    return false;
   }
 
   // -------------------------------------------------------------
   public async setOnlineStatus(
     userId: string,
     onlineStatus: boolean,
-  ): Promise<SetOnlineStatusResponse> {
-    const updatedUser = await this.saveAndGet({
+  ): Promise<UsersResponse> {
+    return await this.saveAndSelect({
       id: userId,
       online: onlineStatus,
     });
-
-    return {
-      id: updatedUser.id,
-      login: updatedUser.login,
-      online: updatedUser.online,
-      roles: updatedUser.roles,
-    };
   }
 
   // -------------------------------------------------------------
-  public async enableActivityUser(userId: string): Promise<void> {
+  public async enableActivityUser(userId: string): Promise<UsersResponse> {
     const user = await this.findById(userId);
 
     if (!user) throw new NotFoundException(USER_NOT_FOUND);
 
-    let userRoles = user.roles;
+    let userRoles: Role[] = user.roles;
 
     if (userRoles.includes(Role.guest)) {
-      userRoles = userRoles.filter((role) => role !== Role.guest);
+      userRoles = userRoles.filter(
+        (role) => role !== Role.guest && role !== Role.user,
+      );
 
       userRoles.push(Role.user);
 
-      await this.usersRepository.save({
+      return this.saveAndSelect({
         id: userId,
         roles: userRoles,
       });
@@ -208,7 +196,7 @@ export class UsersService {
   }
 
   // -------------------------------------------------------------
-  public async disableActivityUser(userId: string): Promise<void> {
+  public async disableActivityUser(userId: string): Promise<UsersResponse> {
     const user = await this.findById(userId);
 
     if (!user) throw new NotFoundException(USER_NOT_FOUND);
@@ -216,11 +204,13 @@ export class UsersService {
     let userRoles = user.roles;
 
     if (!userRoles.includes(Role.guest)) {
-      userRoles = userRoles.filter((role) => role !== Role.user);
+      userRoles = userRoles.filter(
+        (role) => role !== Role.user && role !== Role.guest,
+      );
 
       userRoles.push(Role.guest);
 
-      await this.usersRepository.save({
+      return this.saveAndSelect({
         id: userId,
         roles: userRoles,
       });

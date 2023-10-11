@@ -11,6 +11,8 @@ import {
   FAILED_REMOVE_STREETS,
   STREET_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
+import { StreetResponse } from '../interfaces/street-response.interface.js';
+import { StreetFindOneResponse } from '../interfaces/street-find-one-response.interface.js';
 
 @Injectable()
 export class StreetsService {
@@ -20,41 +22,66 @@ export class StreetsService {
   ) {}
 
   // ----------------------------------------------------------------------
-  public async getFullStreetInformation(): Promise<StreetEntity[]> {
-    return this.streetsRepository.find({
-      relations: ['houses', 'houses.entrances'],
-    });
+  public async getAllStreet(): Promise<StreetResponse[]> {
+    return this.streetsRepository
+      .createQueryBuilder('street')
+      .leftJoinAndSelect('street.houses', 'houses')
+      .leftJoinAndSelect('houses.entrances', 'entrances')
+      .select(['street.id', 'street.nameStreet'])
+      .addSelect(['houses.id', 'houses.houseName'])
+      .addSelect(['entrances.numberEntrance', 'entrances.completed'])
+      .getMany();
+  }
+
+  // ----------------------------------------------------------------------
+  public async findOneWithRelations(
+    findOptions: FindOptionsWhere<StreetEntity>,
+  ): Promise<StreetResponse> {
+    return this.streetsRepository
+      .createQueryBuilder('street')
+      .leftJoinAndSelect('street.houses', 'houses')
+      .leftJoinAndSelect('houses.entrances', 'entrances')
+      .select(['street.id', 'street.nameStreet'])
+      .addSelect(['houses.id', 'houses.houseName'])
+      .addSelect(['entrances.numberEntrance', 'entrances.completed'])
+      .where(findOptions)
+      .getOne();
   }
 
   // ----------------------------------------------------------------------
   public async findOne(
-    findOptions: FindOptionsWhere<StreetEntity>,
-  ): Promise<StreetEntity> {
-    return this.streetsRepository.findOne({ where: findOptions });
+    findOptions: FindOptionsWhere<StreetFindOneResponse>,
+  ): Promise<Partial<StreetEntity>> {
+    return this.streetsRepository.findOne({
+      where: findOptions,
+      select: ['id', 'nameStreet'],
+    });
   }
 
   // ----------------------------------------------------------------------
-  public async saveAndGet(saveOptions: Partial<StreetEntity>): Promise<StreetEntity> {
+  public async saveAndSelect(
+    saveOptions: Partial<StreetResponse>,
+  ): Promise<StreetResponse> {
     const savedStreet = await this.streetsRepository.save(saveOptions);
 
-    return this.findOne({ id: savedStreet.id });
+    return this.findOneWithRelations({ id: savedStreet.id });
   }
 
   // ----------------------------------------------------------------------
-  public async create(nameStreet: string): Promise<StreetEntity> {
-    return this.saveAndGet({ nameStreet: nameStreet });
+  public async create(nameStreet: string): Promise<StreetResponse> {
+    return this.saveAndSelect({ nameStreet: nameStreet });
   }
 
   // ----------------------------------------------------------------------
   public async update(
     streetId: string,
     nameStreet: string,
-  ): Promise<StreetEntity> {
+  ): Promise<StreetResponse> {
     const street = this.findOne({ id: streetId });
 
     if (!street) throw new NotFoundException(STREET_NOT_FOUND);
 
-    return this.saveAndGet({
+    return this.saveAndSelect({
       id: streetId,
       nameStreet: nameStreet,
     });

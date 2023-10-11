@@ -24,7 +24,7 @@ implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 
   //-------------------------------------------------------------
   afterInit(server: Server) {
-    console.log(server);
+    // console.log(server);
   }
 
   //-------------------------------------------------------------

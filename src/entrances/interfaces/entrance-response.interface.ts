@@ -1,4 +1,4 @@
-export interface EntrancesResponse {
+export interface EntranceResponse {
   numberEntrance: number;
   completed: boolean;
 }
