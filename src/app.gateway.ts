@@ -31,7 +31,7 @@ implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
   async handleDisconnect(client: Socket) {
     const token = client.handshake.query.token as string;
 
-    const disconnectingUser = await this.authService.validateAtToken(token);
+    const disconnectingUser = await this.authService.validateAccessToken(token);
 
     const userOnlineStatus = await this.usersService.setOnlineStatus(
       disconnectingUser.userId,
@@ -50,7 +50,7 @@ implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
     try {
       const token = client.handshake.query.token as string;
 
-      const joinedUser = await this.authService.validateAtToken(token);
+      const joinedUser = await this.authService.validateAccessToken(token);
 
       const userOnlineStatus = await this.usersService.setOnlineStatus(
         joinedUser.userId,

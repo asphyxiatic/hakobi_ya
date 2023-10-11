@@ -27,12 +27,12 @@ export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
     request: Request,
     payload: JwtTokenPayload,
   ): Promise<UserFromJwt> {
-    const isUserExist = await this.userService.isUserExist(
+    const isValidUser = await this.userService.isValidUser(
       payload.userId,
       payload.roles,
     );
 
-    if (!isUserExist) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
+    if (!isValidUser) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
 
     const userFromJwt: UserFromJwt = {
       userId: payload.userId,

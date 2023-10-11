@@ -25,8 +25,8 @@ export class HousesService {
 
   //-------------------------------------------------------------
   public async findOneWithRelations(
-    findOptions: FindOptionsWhere<HouseResponse>,
-  ): Promise<HouseResponse> {
+    findOptions: FindOptionsWhere<HouseEntity>,
+  ): Promise<HouseResponse | undefined> {
     return this.housesRepository
       .createQueryBuilder('house')
       .leftJoinAndSelect('house.entrances', 'entrances')
@@ -38,8 +38,8 @@ export class HousesService {
 
   //-------------------------------------------------------------
   public async findOne(
-    findOptions: FindOptionsWhere<HouseFindOneResponse>,
-  ): Promise<HouseEntity> {
+    findOptions: FindOptionsWhere<HouseEntity>,
+  ): Promise<HouseFindOneResponse | undefined> {
     return this.housesRepository.findOne({
       where: findOptions,
       select: ['id', 'houseName'],
@@ -48,7 +48,7 @@ export class HousesService {
 
   //-------------------------------------------------------------
   public async saveAndSelect(
-    saveOptions: Partial<HouseResponse>,
+    saveOptions: Partial<HouseEntity>,
   ): Promise<HouseResponse> {
     const savedHouse = await this.housesRepository.save(saveOptions);
 

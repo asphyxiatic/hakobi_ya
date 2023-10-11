@@ -27,12 +27,12 @@ export class RecoveryStrategy extends PassportStrategy(Strategy, 'recovery') {
     request: Request,
     payload: JwtTokenPayload,
   ): Promise<UserFromJwt> {
-    const isUserExist = await this.usersService.isUserExist(
+    const isValidUser = await this.usersService.isValidUser(
       payload.userId,
       payload.roles,
     );
 
-    if (!isUserExist) throw new ForbiddenException(FORBIDDEN);
+    if (!isValidUser) throw new ForbiddenException(FORBIDDEN);
 
     const token = ExtractJwt.fromAuthHeaderAsBearerToken()(request);
 

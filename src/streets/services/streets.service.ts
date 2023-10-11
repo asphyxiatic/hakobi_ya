@@ -36,7 +36,7 @@ export class StreetsService {
   // ----------------------------------------------------------------------
   public async findOneWithRelations(
     findOptions: FindOptionsWhere<StreetEntity>,
-  ): Promise<StreetResponse> {
+  ): Promise<StreetResponse | undefined> {
     return this.streetsRepository
       .createQueryBuilder('street')
       .leftJoinAndSelect('street.houses', 'houses')
@@ -50,8 +50,8 @@ export class StreetsService {
 
   // ----------------------------------------------------------------------
   public async findOne(
-    findOptions: FindOptionsWhere<StreetFindOneResponse>,
-  ): Promise<Partial<StreetEntity>> {
+    findOptions: FindOptionsWhere<StreetEntity>,
+  ): Promise<StreetFindOneResponse | undefined> {
     return this.streetsRepository.findOne({
       where: findOptions,
       select: ['id', 'nameStreet'],
@@ -60,7 +60,7 @@ export class StreetsService {
 
   // ----------------------------------------------------------------------
   public async saveAndSelect(
-    saveOptions: Partial<StreetResponse>,
+    saveOptions: Partial<StreetEntity>,
   ): Promise<StreetResponse> {
     const savedStreet = await this.streetsRepository.save(saveOptions);
 

@@ -132,7 +132,7 @@ export class UsersService {
   public async findUserForCredentials(
     login: string,
     password: string,
-  ): Promise<UsersResponse> {
+  ): Promise<UsersResponse | undefined> {
     const user = await this.findOneWithPassword({ login: login });
 
     if (!user || !bcrypt.compareSync(password, user.password)) return undefined;
@@ -152,7 +152,7 @@ export class UsersService {
   }
 
   // -------------------------------------------------------------
-  public async isUserExist(userId: string, roles: Role[]): Promise<boolean> {
+  public async isValidUser(userId: string, roles: Role[]): Promise<boolean> {
     const user = await this.findOne({ id: userId });
 
     const rolesMatch = user.roles.every((role) => roles.includes(role));
