@@ -19,11 +19,11 @@ export class AdminsService {
 
     if (!admin) throw new NotFoundException(ADMIN_NOT_FOUND);
 
-    const recoveryToken = await this.authService.createRecoveryToken(
-      admin.id,
-      admin.login,
-      admin.roles,
-    );
+    const recoveryToken = await this.authService.createRecoveryToken({
+      userId: admin.id,
+      login: admin.login,
+      roles: admin.roles,
+    });
 
     await this.mailService.sendMail({
       to: login,
