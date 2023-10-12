@@ -30,9 +30,11 @@ export class HousesService {
     return this.housesRepository
       .createQueryBuilder('house')
       .leftJoinAndSelect('house.entrances', 'entrances')
-      .select(['house.id', 'house.houseName'])
-      .addSelect(['entrances.numberEntrance', 'entrances.completed'])
+      .select(['house.id', 'house.houseName', 'house.streetId'])
+      .addSelect(['entrances.numberEntrance', 'entrances.completed', 'entrances.houseId'])
       .where(findOptions)
+      .addOrderBy('house.createdAt', 'DESC')
+      .addOrderBy('entrances.numberEntrance', 'ASC')
       .getOne();
   }
 
@@ -42,7 +44,7 @@ export class HousesService {
   ): Promise<HouseFindOneResponse | undefined> {
     return this.housesRepository.findOne({
       where: findOptions,
-      select: ['id', 'houseName'],
+      select: ['id', 'houseName', 'streetId'],
     });
   }
 
@@ -73,6 +75,7 @@ export class HousesService {
 
     return {
       id: createdHouse.id,
+      streetId: createdHouse.streetId,
       houseName: createdHouse.houseName,
       entrances: entrances,
     };
@@ -101,6 +104,7 @@ export class HousesService {
 
     return {
       id: updateHouse.id,
+      streetId: updateHouse.streetId,
       houseName: updateHouse.houseName,
       entrances: updateEntrances,
     };

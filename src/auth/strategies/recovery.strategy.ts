@@ -41,6 +41,8 @@ export class RecoveryStrategy extends PassportStrategy(Strategy, 'recovery') {
       token,
     );
 
+    console.log(isValidRecoveryToken);
+
     if (!isValidRecoveryToken) throw new ForbiddenException(FORBIDDEN);
 
     const userFromJwt: UserFromJwt = {

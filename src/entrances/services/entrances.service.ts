@@ -19,7 +19,10 @@ export class EntrancesService {
   ): Promise<EntranceResponse[]> {
     return this.entrancesRepository.find({
       where: findOptions,
-      select: ['numberEntrance', 'completed'],
+      select: ['numberEntrance', 'completed', 'houseId'],
+      order: {
+        numberEntrance: 'ASC',
+      },
     });
   }
 
@@ -29,7 +32,7 @@ export class EntrancesService {
   ): Promise<EntranceFindOneResponse> {
     return this.entrancesRepository.findOne({
       where: findOptions,
-      select: ['id', 'numberEntrance', 'completed'],
+      select: ['id', 'numberEntrance', 'completed', 'houseId'],
     });
   }
 
@@ -39,9 +42,12 @@ export class EntrancesService {
   ): Promise<EntranceResponse> {
     const savedEntrance = await this.entrancesRepository.save(saveOptions);
 
+    const entranceResponse = await this.findOne({ id: savedEntrance.id });
+
     return {
-      numberEntrance: savedEntrance.numberEntrance,
-      completed: savedEntrance.completed,
+      houseId: entranceResponse.houseId,
+      numberEntrance: entranceResponse.numberEntrance,
+      completed: entranceResponse.completed,
     };
   }
 

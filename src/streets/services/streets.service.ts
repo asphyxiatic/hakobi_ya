@@ -28,8 +28,15 @@ export class StreetsService {
       .leftJoinAndSelect('street.houses', 'houses')
       .leftJoinAndSelect('houses.entrances', 'entrances')
       .select(['street.id', 'street.nameStreet'])
-      .addSelect(['houses.id', 'houses.houseName'])
-      .addSelect(['entrances.numberEntrance', 'entrances.completed'])
+      .addSelect(['houses.id', 'houses.houseName', 'houses.streetId'])
+      .addSelect([
+        'entrances.numberEntrance',
+        'entrances.completed',
+        'entrances.houseId',
+      ])
+      .orderBy('street.createdAt', 'DESC')
+      .addOrderBy('houses.createdAt', 'DESC')
+      .addOrderBy('entrances.numberEntrance', 'ASC')
       .getMany();
   }
 
@@ -42,9 +49,16 @@ export class StreetsService {
       .leftJoinAndSelect('street.houses', 'houses')
       .leftJoinAndSelect('houses.entrances', 'entrances')
       .select(['street.id', 'street.nameStreet'])
-      .addSelect(['houses.id', 'houses.houseName'])
-      .addSelect(['entrances.numberEntrance', 'entrances.completed'])
+      .addSelect(['houses.id', 'houses.houseName', 'houses.streetId'])
+      .addSelect([
+        'entrances.numberEntrance',
+        'entrances.completed',
+        'entrances.houseId',
+      ])
       .where(findOptions)
+      .orderBy('street.createdAt', 'DESC')
+      .addOrderBy('houses.createdAt', 'DESC')
+      .addOrderBy('entrances.numberEntrance', 'ASC')
       .getOne();
   }
 

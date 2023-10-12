@@ -212,9 +212,11 @@ export class AuthService {
     userId: string,
     recoveryToken: string,
   ): Promise<boolean> {
-    return !!this.usersService.findOne({
+    console.log();
+    const isValidRecoveryToken = await this.usersService.findOne({
       id: userId,
       recoveryToken: recoveryToken,
     });
+    return !!isValidRecoveryToken;
   }
 }
