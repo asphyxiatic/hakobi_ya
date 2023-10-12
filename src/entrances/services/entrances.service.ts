@@ -46,20 +46,31 @@ export class EntrancesService {
   }
 
   // ---------------------------------------------------------------
+  public async saveMany(entrancesToInsert: Partial<EntranceEntity>[]) {
+    await this.entrancesRepository
+      .createQueryBuilder('entrance')
+      .insert()
+      .values(entrancesToInsert)
+      .execute();
+  }
+
+  // ---------------------------------------------------------------
   public async createEntrancesForHouse(
     houseId: string,
     quantity: number,
   ): Promise<EntranceResponse[]> {
-    const entrances: EntranceResponse[] = [];
+    const entrancesToInsert = [];
 
     for (let numberEntrance = 1; numberEntrance <= quantity; numberEntrance++) {
-      entrances.push(
-        await this.saveAndSelect({
-          houseId: houseId,
-          numberEntrance: numberEntrance,
-        }),
-      );
+      entrancesToInsert.push({
+        houseId: houseId,
+        numberEntrance: numberEntrance,
+      });
     }
+
+    await this.saveMany(entrancesToInsert);
+
+    const entrances = this.find({ houseId: houseId });
 
     return entrances;
   }
@@ -75,25 +86,29 @@ export class EntrancesService {
 
     if (countEntrancesForHouse > updatedQuantity) {
       await this.entrancesRepository
-        .createQueryBuilder('entrance')
+        .createQueryBuilder('entrances')
         .delete()
-        .where('entrance.numberEntrance > :updatedQuantity', {
+        .from('entrances')
+        .where('numberEntrance > :updatedQuantity', {
           updatedQuantity: updatedQuantity,
         })
         .execute();
     } else if (countEntrancesForHouse < updatedQuantity) {
       let numberEntrance = countEntrancesForHouse + 1;
+      const entrancesToInsert = [];
 
       for (
         numberEntrance;
         numberEntrance <= updatedQuantity;
         numberEntrance++
       ) {
-        await this.entrancesRepository.save({
+        entrancesToInsert.push({
           houseId: houseId,
           numberEntrance: numberEntrance,
         });
       }
+
+      await this.saveMany(entrancesToInsert);
     }
 
     const entrances = await this.find({ houseId: houseId });

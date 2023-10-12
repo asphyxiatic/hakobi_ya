@@ -15,6 +15,11 @@ export const appDataSource = new DataSource({
     HouseEntity,
     EntranceEntity,
   ],
+  pool: {
+    max: 10,
+    min: 2,
+    idleTimeoutMillis: 30000,
+  },
   url: config.DB_URL,
   migrationsTableName: 'migrations_table',
   migrations: ['./dist/src/database/migrations/*.js'],
