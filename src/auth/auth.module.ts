@@ -10,6 +10,7 @@ import { HttpAtStrategy } from './strategies/http-at.strategy.js';
 import { RtStrategy } from './strategies/rt.strategy.js';
 import { WsAtStrategy } from './strategies/ws-at.strategy.js';
 import { RecoveryStrategy } from './strategies/recovery.strategy.js';
+import { AuthGateway } from './gateways/auth.gateway.js';
 
 @Module({
   imports: [JwtToolsModule, UsersModule, TokensModule, EncryptionModule],
@@ -20,6 +21,7 @@ import { RecoveryStrategy } from './strategies/recovery.strategy.js';
     RtStrategy,
     WsAtStrategy,
     RecoveryStrategy,
+    AuthGateway,
   ],
   exports: [AuthService],
 })

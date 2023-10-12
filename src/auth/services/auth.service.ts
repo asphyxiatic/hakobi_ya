@@ -2,7 +2,6 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../../users/services/users.service.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
@@ -10,16 +9,15 @@ import config from '../../config/config.js';
 import { JwtToolsService } from '../../jwt/services/jwt-tools.service.js';
 import { TokensResponse } from '../interfaces/tokens-response.interface.js';
 import { TokensService } from '../../tokens/services/tokens.service.js';
-import { SignInDto } from '../dto/sign-in.dto.js';
 import { SignInResponse } from '../interfaces/sign-in-response.interface.js';
 import passwordGenerator from 'generate-password-ts';
 import { RegisterUserResponse } from '../interfaces/register-user.interface.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import {
   LOGIN_USER_CONFLICT,
-  UNAUTHORIZED_RESOURCE,
   USER_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
+import { UserCredentials } from '../interfaces/user-credentials.interface.js';
 
 @Injectable()
 export class AuthService {
@@ -38,7 +36,7 @@ export class AuthService {
 
   //-------------------------------------------------------------
   public async signIn(
-    credentials: SignInDto,
+    credentials: UserCredentials,
     fingerprint: string,
   ): Promise<SignInResponse> {
     const { login, password } = credentials;
@@ -128,18 +126,20 @@ export class AuthService {
   }
 
   //-------------------------------------------------------------
-  public async validateAccessToken(token: string): Promise<UserFromJwt> {
-    const payload: JwtTokenPayload = await this.jwtToolsService.decodeToken(
-      token,
-      this.JWT_ACCESS_SECRET,
-    );
+  public async validateAccessToken(
+    token: string,
+  ): Promise<UserFromJwt | undefined> {
+    const payload: JwtTokenPayload | undefined =
+      await this.jwtToolsService.decodeToken(token, this.JWT_ACCESS_SECRET);
+
+    if (!payload) return undefined;
 
     const isValidUser = await this.usersService.isValidUser(
       payload.userId,
       payload.roles,
     );
 
-    if (!isValidUser) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
+    if (!isValidUser) return undefined;
 
     const userFromJwt: UserFromJwt = {
       userId: payload.userId,

@@ -5,7 +5,12 @@ import {
   MessageBody,
 } from '@nestjs/websockets';
 import { Server } from 'socket.io';
-import { UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  UseFilters,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import config from '../../config/config.js';
 import { EntrancesService } from '../../entrances/services/entrances.service.js';
 import { SettingСompletionEntranceDto } from '../dto/setting-completion-entrance.dto.js';
@@ -16,7 +21,9 @@ import {
 import { WsAtGuard } from '../../auth/guards/ws-at.guard.js';
 import { WsRoleGuard } from '../guards/ws-role.guard.js';
 import { Role } from '../enums/role.enum.js';
+import { WebSocketExceptionFilter } from '../../common/filters/ws-exception.filter.js';
 
+@UseFilters(WebSocketExceptionFilter)
 @UsePipes(new ValidationPipe())
 @UseGuards(WsAtGuard)
 @WebSocketGateway(config.WS_PORT, { cors: { origin: '*' } })

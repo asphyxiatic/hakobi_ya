@@ -30,7 +30,7 @@ export class HousesService {
     return this.housesRepository
       .createQueryBuilder('house')
       .leftJoinAndSelect('house.entrances', 'entrances')
-      .select(['house.id', 'houses.houseName'])
+      .select(['house.id', 'house.houseName'])
       .addSelect(['entrances.numberEntrance', 'entrances.completed'])
       .where(findOptions)
       .getOne();

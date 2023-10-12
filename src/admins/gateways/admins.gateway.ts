@@ -12,6 +12,7 @@ import { WsAtGuard } from '../../auth/guards/ws-at.guard.js';
 import { WsRoleGuard } from '../../users/guards/ws-role.guard.js';
 import {
   ForbiddenException,
+  UseFilters,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -39,7 +40,9 @@ import { DeleteUsersDto } from '../dto/delete-users.dto.js';
 import { UpdateStreetsDto } from '../dto/update-street.dto.js';
 import { FORBIDDEN } from '../../common/errors/errors.constants.js';
 import { RegisterUserWsEventResponse } from '../interfaces/register-user-ws-event-response.interface.js';
+import { WebSocketExceptionFilter } from '../../common/filters/ws-exception.filter.js';
 
+@UseFilters(WebSocketExceptionFilter)
 @UsePipes(new ValidationPipe())
 @UseGuards(WsRoleGuard([Role.admin]))
 @UseGuards(WsAtGuard)
@@ -92,13 +95,13 @@ export class AdminsGateway {
   async createHouse(
     @MessageBody() { streetId, houseName, quantityEntrances }: CreateHouseDto,
   ): Promise<void> {
-    const newHouse = await this.housesService.create(
+    const createdHouse = await this.housesService.create(
       streetId,
       houseName,
       quantityEntrances,
     );
 
-    this.server.emit(WsOutgoingAdminEvent.CREATE_HOUSE, newHouse);
+    this.server.emit(WsOutgoingAdminEvent.CREATE_HOUSE, createdHouse);
   }
 
   //----------------------------------------------------------
@@ -125,20 +128,20 @@ export class AdminsGateway {
     @MessageBody() { login }: RegisterUserDto,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    const newUser = await this.authService.registerUser(login);
+    const registeredUserInfo = await this.authService.registerUser(login);
 
     client.emit(
       WsOutgoingAdminEvent.REGISTER_USER_CREDENTIALS,
-      newUser.credentials,
+      registeredUserInfo.credentials,
     );
 
-    const registerUser: RegisterUserWsEventResponse = {
-      id: newUser.id,
-      login: newUser.credentials.login,
-      roles: newUser.roles,
+    const registeredUser: RegisterUserWsEventResponse = {
+      id: registeredUserInfo.id,
+      login: registeredUserInfo.credentials.login,
+      roles: registeredUserInfo.roles,
     };
 
-    this.server.emit(WsOutgoingAdminEvent.REGISTER_USER, registerUser);
+    this.server.emit(WsOutgoingAdminEvent.REGISTER_USER, registeredUser);
   }
 
   //----------------------------------------------------------
@@ -147,9 +150,7 @@ export class AdminsGateway {
     @MessageBody() { userId }: EnableActivityUserDto,
     @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    if (userId === user.userId) {
-      throw new ForbiddenException(FORBIDDEN);
-    }
+    if (userId === user.userId) throw new ForbiddenException(FORBIDDEN);
 
     const updatedUser = await this.usersService.enableActivityUser(userId);
 
@@ -162,9 +163,7 @@ export class AdminsGateway {
     @MessageBody() { userId }: DisableActivityUserDto,
     @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    if (userId === user.userId) {
-      throw new ForbiddenException(FORBIDDEN);
-    }
+    if (userId === user.userId) throw new ForbiddenException(FORBIDDEN);
 
     const updatedUser = await this.usersService.disableActivityUser(userId);
 
@@ -177,9 +176,7 @@ export class AdminsGateway {
     @MessageBody() { userId, login }: UpdateUserDto,
     @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    if (userId === user.userId) {
-      throw new ForbiddenException(FORBIDDEN);
-    }
+    if (userId === user.userId) throw new ForbiddenException(FORBIDDEN);
 
     const updatedUser = await this.usersService.updateLogin(userId, login);
 
@@ -193,8 +190,6 @@ export class AdminsGateway {
     @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
     const userIdsForDelete = userIds.filter((userId) => userId !== user.userId);
-
-    // console.log(userIds);
 
     await this.usersService.delete(userIdsForDelete);
 
