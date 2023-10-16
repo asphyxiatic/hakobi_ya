@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from '../services/auth.service.js';
 import { GetFingerprints } from '../decorators/get-fingerprints.decorator.js';
 import { SignInDto } from '../dto/sign-in.dto.js';
@@ -27,7 +27,7 @@ export class AuthController {
   }
 
   @UseGuards(RtGuard)
-  @Post('refresh')
+  @Get('refresh')
   async refreshTokens(
     @GetCurrentHttpUser() user: UserFromJwt,
     @GetFingerprints() fingerprint: string,

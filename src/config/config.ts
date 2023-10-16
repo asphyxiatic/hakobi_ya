@@ -13,4 +13,6 @@ export default cleanEnv(process.env, {
   MAIL_URL_TRANSPORT: str(),
   MAIL_FROM_NAME: str(),
   MAIL_FROM: str(),
+  WS_CORS_ORIGIN: str({ default: '*' }),
+  APP_CORS_ORIGIN: str({ default: '*' }),
 });

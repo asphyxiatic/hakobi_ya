@@ -13,9 +13,6 @@ export class UserEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: false })
     password!: string;
 
-  @Column({ type: 'boolean', default: false, nullable: false })
-    online!: boolean;
-
   @Column({
     name: 'recovery_token',
     type: 'varchar',

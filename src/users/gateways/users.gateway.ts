@@ -18,15 +18,13 @@ import {
   WsIncomingUserEvent,
   WsOutgoingUserEvent,
 } from '../enums/ws-user-events.enum.js';
-import { WsAtGuard } from '../../auth/guards/ws-at.guard.js';
 import { WsRoleGuard } from '../guards/ws-role.guard.js';
 import { Role } from '../enums/role.enum.js';
 import { WebSocketExceptionFilter } from '../../common/filters/ws-exception.filter.js';
 
 @UseFilters(WebSocketExceptionFilter)
 @UsePipes(new ValidationPipe())
-@UseGuards(WsAtGuard)
-@WebSocketGateway(config.WS_PORT, { cors: { origin: '*' } })
+@WebSocketGateway(config.WS_PORT, { cors: { origin: config.WS_CORS_ORIGIN } })
 export class UsersGateway {
   constructor(private readonly entrancesService: EntrancesService) {}
 

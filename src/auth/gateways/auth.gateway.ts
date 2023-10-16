@@ -5,66 +5,52 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { AuthService } from '../services/auth.service';
-import { UsersService } from '../../users/services/users.service';
 import config from '../../config/config';
 import { WsOutgoingEvent } from '../enums/ws-events.enum';
-import { UNAUTHORIZED_RESOURCE } from '../../common/errors/errors.constants';
+import { UserFromJwt } from '../interfaces/user-from-jwt.interface';
+import { AuthService } from '../services/auth.service';
 
-@WebSocketGateway(config.WS_PORT, { cors: { origin: '*' } })
+interface UserSocket extends Socket {
+  user: UserFromJwt;
+}
+
+@WebSocketGateway(config.WS_PORT, { cors: { origin: config.WS_CORS_ORIGIN } })
 export class AuthGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   @WebSocketServer() server: Server;
 
   //-------------------------------------------------------------
-  async handleDisconnect(client: Socket) {
-    const token = client.handshake.query.token as string;
+  async handleConnection(socket: UserSocket) {
+    const joinedUser = await this.authService.getUserFromSocket(socket);
 
-    const disconnectingUser = await this.authService.validateAccessToken(token);
-
-    if (!disconnectingUser) {
+    if (!joinedUser) {
+      socket.disconnect(true);
       return;
     }
 
-    const userOnlineStatus = await this.usersService.setOnlineStatus(
-      disconnectingUser.userId,
-      false,
-    );
+    socket.user = joinedUser;
 
     console.log(
-      `Disconnect ${userOnlineStatus.login}, online_status: ${userOnlineStatus.online}`,
+      `Connection ${joinedUser.login}, roles: ${joinedUser.roles.join(', ')}`,
     );
 
-    this.server.emit(WsOutgoingEvent.USER_ONLINE_STATUS, userOnlineStatus);
+    this.server.emit(WsOutgoingEvent.USER_ONLINE_STATUS, joinedUser.userId);
   }
 
   //-------------------------------------------------------------
-  async handleConnection(client: Socket) {
-    const token = client.handshake.query.token as string;
+  async handleDisconnect(socket: UserSocket) {
+    socket.disconnect();
 
-    const joinedUser = await this.authService.validateAccessToken(token);
+    const disconnectingUser = socket.user;
 
-    if (!joinedUser) {
-      client.emit('error', { status: 401, message: UNAUTHORIZED_RESOURCE });
-      client.disconnect(true);
-      return;
-    }
+    if (!disconnectingUser) return;
 
-    const userOnlineStatus = await this.usersService.setOnlineStatus(
-      joinedUser.userId,
-      true,
+    console.log(`Disconnect ${disconnectingUser.login}`);
+
+    this.server.emit(
+      WsOutgoingEvent.USER_OFFLINE_STATUS,
+      disconnectingUser.userId,
     );
-
-    console.log(
-      `Connection ${userOnlineStatus.login}, online_status: ${
-        userOnlineStatus.online
-      }, roles: ${userOnlineStatus.roles.join(', ')}`,
-    );
-
-    this.server.emit(WsOutgoingEvent.USER_ONLINE_STATUS, userOnlineStatus);
   }
 }

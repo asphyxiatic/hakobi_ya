@@ -4,14 +4,13 @@ import {
   WebSocketGateway,
   WebSocketServer,
   SubscribeMessage,
+  WsException,
 } from '@nestjs/websockets';
 import { AuthService } from '../../auth/services/auth.service.js';
 import { Server, Socket } from 'socket.io';
 import { RegisterUserDto } from '../dto/register-user.dto.js';
-import { WsAtGuard } from '../../auth/guards/ws-at.guard.js';
 import { WsRoleGuard } from '../../users/guards/ws-role.guard.js';
 import {
-  ForbiddenException,
   UseFilters,
   UseGuards,
   UsePipes,
@@ -45,8 +44,7 @@ import { WebSocketExceptionFilter } from '../../common/filters/ws-exception.filt
 @UseFilters(WebSocketExceptionFilter)
 @UsePipes(new ValidationPipe())
 @UseGuards(WsRoleGuard([Role.admin]))
-@UseGuards(WsAtGuard)
-@WebSocketGateway(config.WS_PORT, { cors: { origin: '*' } })
+@WebSocketGateway(config.WS_PORT, { cors: { origin: config.WS_CORS_ORIGIN } })
 export class AdminsGateway {
   constructor(
     private readonly authService: AuthService,
@@ -150,7 +148,7 @@ export class AdminsGateway {
     @MessageBody() { userId }: EnableActivityUserDto,
     @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    if (userId === user.userId) throw new ForbiddenException(FORBIDDEN);
+    if (userId === user.userId) throw new WsException(FORBIDDEN);
 
     const updatedUser = await this.usersService.enableActivityUser(userId);
 
@@ -163,7 +161,7 @@ export class AdminsGateway {
     @MessageBody() { userId }: DisableActivityUserDto,
     @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    if (userId === user.userId) throw new ForbiddenException(FORBIDDEN);
+    if (userId === user.userId) throw new WsException(FORBIDDEN);
 
     const updatedUser = await this.usersService.disableActivityUser(userId);
 
@@ -176,7 +174,7 @@ export class AdminsGateway {
     @MessageBody() { userId, login }: UpdateUserDto,
     @GetCurrentWsClient() user: UserFromJwt,
   ): Promise<void> {
-    if (userId === user.userId) throw new ForbiddenException(FORBIDDEN);
+    if (userId === user.userId) throw new WsException(FORBIDDEN);
 
     const updatedUser = await this.usersService.updateLogin(userId, login);
 

@@ -5,6 +5,6 @@ export const GetCurrentWsClient = createParamDecorator(
   (data: unknown, ctx: ExecutionContext): UserFromJwt => {
     const client = ctx.switchToWs().getClient();
 
-    return client.handshake['user'];
+    return client['user'];
   },
 );

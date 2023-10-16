@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { HouseEntity } from '../entities/house.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +10,7 @@ import {
 import { UpdateHouseOptions } from '../interfaces/update-house-options.interface.js';
 import { HouseResponse } from '../interfaces/house-reaponse.interface.js';
 import { HouseFindOneResponse } from '../interfaces/house-find-one-response.interface.js';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class HousesService {
@@ -31,7 +28,11 @@ export class HousesService {
       .createQueryBuilder('house')
       .leftJoinAndSelect('house.entrances', 'entrances')
       .select(['house.id', 'house.houseName', 'house.streetId'])
-      .addSelect(['entrances.numberEntrance', 'entrances.completed', 'entrances.houseId'])
+      .addSelect([
+        'entrances.numberEntrance',
+        'entrances.completed',
+        'entrances.houseId',
+      ])
       .where(findOptions)
       .addOrderBy('house.createdAt', 'DESC')
       .addOrderBy('entrances.numberEntrance', 'ASC')
@@ -89,7 +90,7 @@ export class HousesService {
   }: UpdateHouseOptions): Promise<HouseResponse> {
     const house = await this.findOneWithRelations({ id: houseId });
 
-    if (!house) throw new NotFoundException(HOUSE_NOT_FOUND);
+    if (!house) throw new WsException(HOUSE_NOT_FOUND);
 
     const updateHouse = houseName
       ? await this.saveAndSelect({ id: houseId, houseName })
@@ -115,7 +116,7 @@ export class HousesService {
     try {
       await this.housesRepository.delete(houseIds);
     } catch (error: any) {
-      throw new InternalServerErrorException(FAILED_REMOVE_HOUSES);
+      throw new WsException(FAILED_REMOVE_HOUSES);
     }
   }
 }

@@ -1,4 +1,12 @@
-import { IsInt, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsPositive,
+  IsString,
+  IsUUID,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class CreateHouseDto {
   @IsUUID()
@@ -10,6 +18,9 @@ export class CreateHouseDto {
     houseName!: string;
 
   @IsInt()
+  @Min(1)
+  @IsPositive()
+  @Max(40)
   @IsNotEmpty()
     quantityEntrances!: number;
 }

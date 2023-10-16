@@ -4,17 +4,13 @@ import config from '../../config/config.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UsersService } from '../../users/services/users.service.js';
 import { Request } from 'express';
 import { TokensService } from '../../tokens/services/tokens.service.js';
 import { UNAUTHORIZED_RESOURCE } from '../../common/errors/errors.constants.js';
 
 @Injectable()
 export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
-  constructor(
-    private readonly userService: UsersService,
-    private readonly tokensService: TokensService,
-  ) {
+  constructor(private readonly tokensService: TokensService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -27,13 +23,6 @@ export class RtStrategy extends PassportStrategy(Strategy, 'rt') {
     request: Request,
     payload: JwtTokenPayload,
   ): Promise<UserFromJwt> {
-    const isValidUser = await this.userService.isValidUser(
-      payload.userId,
-      payload.roles,
-    );
-
-    if (!isValidUser) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
-
     const userFromJwt: UserFromJwt = {
       userId: payload.userId,
       login: payload.login,

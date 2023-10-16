@@ -1,9 +1,5 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { FindOptionsWhere, Repository, SelectQueryBuilder } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StreetEntity } from '../entities/street.entity.js';
 
@@ -13,6 +9,7 @@ import {
 } from '../../common/errors/errors.constants.js';
 import { StreetResponse } from '../interfaces/street-response.interface.js';
 import { StreetFindOneResponse } from '../interfaces/street-find-one-response.interface.js';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class StreetsService {
@@ -23,42 +20,19 @@ export class StreetsService {
 
   // ----------------------------------------------------------------------
   public async getAllStreet(): Promise<StreetResponse[]> {
-    return this.streetsRepository
-      .createQueryBuilder('street')
-      .leftJoinAndSelect('street.houses', 'houses')
-      .leftJoinAndSelect('houses.entrances', 'entrances')
-      .select(['street.id', 'street.nameStreet'])
-      .addSelect(['houses.id', 'houses.houseName', 'houses.streetId'])
-      .addSelect([
-        'entrances.numberEntrance',
-        'entrances.completed',
-        'entrances.houseId',
-      ])
-      .orderBy('street.createdAt', 'DESC')
-      .addOrderBy('houses.createdAt', 'DESC')
-      .addOrderBy('entrances.numberEntrance', 'ASC')
-      .getMany();
+    return this.configureFindStreetQuery(
+      this.streetsRepository.createQueryBuilder('street'),
+    ).getMany();
   }
 
   // ----------------------------------------------------------------------
   public async findOneWithRelations(
     findOptions: FindOptionsWhere<StreetEntity>,
   ): Promise<StreetResponse | undefined> {
-    return this.streetsRepository
-      .createQueryBuilder('street')
-      .leftJoinAndSelect('street.houses', 'houses')
-      .leftJoinAndSelect('houses.entrances', 'entrances')
-      .select(['street.id', 'street.nameStreet'])
-      .addSelect(['houses.id', 'houses.houseName', 'houses.streetId'])
-      .addSelect([
-        'entrances.numberEntrance',
-        'entrances.completed',
-        'entrances.houseId',
-      ])
+    return this.configureFindStreetQuery(
+      this.streetsRepository.createQueryBuilder('street'),
+    )
       .where(findOptions)
-      .orderBy('street.createdAt', 'DESC')
-      .addOrderBy('houses.createdAt', 'DESC')
-      .addOrderBy('entrances.numberEntrance', 'ASC')
       .getOne();
   }
 
@@ -93,7 +67,7 @@ export class StreetsService {
   ): Promise<StreetResponse> {
     const street = this.findOne({ id: streetId });
 
-    if (!street) throw new NotFoundException(STREET_NOT_FOUND);
+    if (!street) throw new WsException(STREET_NOT_FOUND);
 
     return this.saveAndSelect({
       id: streetId,
@@ -106,7 +80,25 @@ export class StreetsService {
     try {
       await this.streetsRepository.delete(streetIds);
     } catch (error: any) {
-      throw new InternalServerErrorException(FAILED_REMOVE_STREETS);
+      throw new WsException(FAILED_REMOVE_STREETS);
     }
+  }
+
+  private configureFindStreetQuery(
+    queryBuilder: SelectQueryBuilder<StreetEntity>,
+  ): SelectQueryBuilder<StreetEntity> {
+    return queryBuilder
+      .leftJoinAndSelect('street.houses', 'houses')
+      .leftJoinAndSelect('houses.entrances', 'entrances')
+      .select(['street.id', 'street.nameStreet'])
+      .addSelect(['houses.id', 'houses.houseName', 'houses.streetId'])
+      .addSelect([
+        'entrances.numberEntrance',
+        'entrances.completed',
+        'entrances.houseId',
+      ])
+      .orderBy('street.createdAt', 'DESC')
+      .addOrderBy('houses.createdAt', 'DESC')
+      .addOrderBy('entrances.numberEntrance', 'ASC');
   }
 }

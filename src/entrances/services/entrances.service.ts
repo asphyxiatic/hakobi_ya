@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { EntranceEntity } from '../entities/entrance.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ENTRANCE_NOT_FOUND } from '../../common/errors/errors.constants.js';
 import { EntranceResponse } from '../interfaces/entrance-response.interface.js';
 import { EntranceFindOneResponse } from '../interfaces/entrance-find-on-response.interace.js';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class EntrancesService {
@@ -133,7 +134,7 @@ export class EntrancesService {
       numberEntrance: numberEntrance,
     });
 
-    if (!entrance) throw new NotFoundException(ENTRANCE_NOT_FOUND);
+    if (!entrance) throw new WsException(ENTRANCE_NOT_FOUND);
 
     return this.saveAndSelect({ id: entrance.id, completed: complete });
   }

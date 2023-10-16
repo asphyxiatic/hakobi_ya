@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UsersService } from '../../users/services/users.service.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
 import config from '../../config/config.js';
@@ -18,14 +14,16 @@ import {
   USER_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
 import { UserCredentials } from '../interfaces/user-credentials.interface.js';
+import { Socket } from 'socket.io';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class AuthService {
   private readonly JWT_ACCESS_SECRET = config.JWT_ACCESS_SECRET_KEY;
   private readonly JWT_REFRESH_SECRET = config.JWT_REFRESH_SECRET_KEY;
   private readonly JWT_RECOVERY_SECRET = config.JWT_RECOVERY_SECRET_KEY;
-  private readonly JWT_ACCESS_EXPIRES = '60d';
-  private readonly JWT_RECOVERY_EXPIRES = '60d';
+  private readonly JWT_ACCESS_EXPIRES = '15m';
+  private readonly JWT_RECOVERY_EXPIRES = '5m';
   private readonly JWT_REFRESH_EXPIRES = '60d';
 
   constructor(
@@ -67,10 +65,35 @@ export class AuthService {
   }
 
   //-------------------------------------------------------------
+  public async getUserFromSocket(
+    socket: Socket,
+  ): Promise<UserFromJwt | undefined> {
+    const token = socket.handshake.auth.token;
+
+    if (!token) return undefined;
+
+    const tokenPayload: JwtTokenPayload | undefined =
+      await this.jwtToolsService.decodeToken(
+        token,
+        config.JWT_ACCESS_SECRET_KEY,
+      );
+
+    if (!tokenPayload) return undefined;
+
+    const userFromJwt: UserFromJwt = {
+      userId: tokenPayload.userId,
+      login: tokenPayload.login,
+      roles: tokenPayload.roles,
+    };
+
+    return userFromJwt;
+  }
+
+  //-------------------------------------------------------------
   public async registerUser(login: string): Promise<RegisterUserResponse> {
     const user = await this.usersService.findByLogin(login);
 
-    if (user) throw new ConflictException(LOGIN_USER_CONFLICT);
+    if (user) throw new WsException(LOGIN_USER_CONFLICT);
 
     const password = passwordGenerator.generate({ length: 8, numbers: true });
 
@@ -79,7 +102,6 @@ export class AuthService {
     return {
       id: registredUser.id,
       roles: registredUser.roles,
-      online: registredUser.online,
       credentials: {
         login: registredUser.login,
         password: password,
@@ -123,31 +145,6 @@ export class AuthService {
     await this.usersService.setRecoveryToken(payload.userId, recoveryToken);
 
     return recoveryToken;
-  }
-
-  //-------------------------------------------------------------
-  public async validateAccessToken(
-    token: string,
-  ): Promise<UserFromJwt | undefined> {
-    const payload: JwtTokenPayload | undefined =
-      await this.jwtToolsService.decodeToken(token, this.JWT_ACCESS_SECRET);
-
-    if (!payload) return undefined;
-
-    const isValidUser = await this.usersService.isValidUser(
-      payload.userId,
-      payload.roles,
-    );
-
-    if (!isValidUser) return undefined;
-
-    const userFromJwt: UserFromJwt = {
-      userId: payload.userId,
-      login: payload.login,
-      roles: payload.roles,
-    };
-
-    return userFromJwt;
   }
 
   // -------------------------------------------------------------
@@ -212,7 +209,6 @@ export class AuthService {
     userId: string,
     recoveryToken: string,
   ): Promise<boolean> {
-    console.log();
     const isValidRecoveryToken = await this.usersService.findOne({
       id: userId,
       recoveryToken: recoveryToken,

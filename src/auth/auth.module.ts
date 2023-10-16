@@ -8,9 +8,9 @@ import { FingerprintsMiddleware } from './middlewares/fingerprints.middleware.js
 import { EncryptionModule } from '../encryption/encryption.module.js';
 import { HttpAtStrategy } from './strategies/http-at.strategy.js';
 import { RtStrategy } from './strategies/rt.strategy.js';
-import { WsAtStrategy } from './strategies/ws-at.strategy.js';
 import { RecoveryStrategy } from './strategies/recovery.strategy.js';
 import { AuthGateway } from './gateways/auth.gateway.js';
+// import { WsAtStrategy } from './strategies/ws-at.strategy.js';
 
 @Module({
   imports: [JwtToolsModule, UsersModule, TokensModule, EncryptionModule],
@@ -19,9 +19,9 @@ import { AuthGateway } from './gateways/auth.gateway.js';
     AuthService,
     HttpAtStrategy,
     RtStrategy,
-    WsAtStrategy,
     RecoveryStrategy,
     AuthGateway,
+    // WsAtStrategy,
   ],
   exports: [AuthService],
 })

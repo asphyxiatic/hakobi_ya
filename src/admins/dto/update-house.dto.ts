@@ -2,8 +2,11 @@ import {
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsPositive,
   IsString,
   IsUUID,
+  Max,
+  Min,
 } from 'class-validator';
 
 export class UpdateHouseDto {
@@ -16,6 +19,9 @@ export class UpdateHouseDto {
     houseName?: string;
 
   @IsInt()
+  @Min(1)
+  @IsPositive()
+  @Max(40)
   @IsOptional()
     quantityEntrances?: number;
 }

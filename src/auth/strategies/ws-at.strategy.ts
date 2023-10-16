@@ -1,15 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy, StrategyOptions } from 'passport-jwt';
 import config from '../../config/config.js';
 import { UserFromJwt } from '../interfaces/user-from-jwt.interface.js';
 import { JwtTokenPayload } from '../../jwt/interfaces/token-payload.interface.js';
-import { UsersService } from '../../users/services/users.service.js';
-import { UNAUTHORIZED_RESOURCE } from '../../common/errors/errors.constants.js';
 
 @Injectable()
 export class WsAtStrategy extends PassportStrategy(Strategy, 'ws') {
-  constructor(private readonly userService: UsersService) {
+  constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromUrlQueryParameter('token'),
       ignoreExpiration: false,
@@ -18,13 +16,6 @@ export class WsAtStrategy extends PassportStrategy(Strategy, 'ws') {
   }
 
   async validate(payload: JwtTokenPayload) {
-    const isValidUser = await this.userService.isValidUser(
-      payload.userId,
-      payload.roles,
-    );
-
-    if (!isValidUser) throw new UnauthorizedException(UNAUTHORIZED_RESOURCE);
-
     const userFromJwt: UserFromJwt = {
       userId: payload.userId,
       login: payload.login,

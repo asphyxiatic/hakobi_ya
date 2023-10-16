@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from '../entities/user.entity.js';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,6 +9,7 @@ import {
   USER_NOT_FOUND,
 } from '../../common/errors/errors.constants.js';
 import { UsersResponse } from '../interfaces/users-response.inteface.js';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class UsersService {
@@ -26,7 +23,7 @@ export class UsersService {
   //-------------------------------------------------------------
   public async getAllUsers(): Promise<UsersResponse[]> {
     return this.usersRepository.find({
-      select: ['id', 'login', 'online', 'roles'],
+      select: ['id', 'login', 'roles'],
       order: {
         createdAt: 'DESC',
       },
@@ -39,7 +36,7 @@ export class UsersService {
   ): Promise<UsersResponse | undefined> {
     return this.usersRepository.findOne({
       where: findOptions,
-      select: ['id', 'login', 'online', 'roles'],
+      select: ['id', 'login', 'roles'],
     });
   }
 
@@ -48,7 +45,7 @@ export class UsersService {
   ): Promise<(UsersResponse & { password: string }) | undefined> {
     return this.usersRepository.findOne({
       where: findOptions,
-      select: ['id', 'login', 'online', 'roles', 'password'],
+      select: ['id', 'login', 'roles', 'password'],
     });
   }
 
@@ -101,7 +98,7 @@ export class UsersService {
   ): Promise<UsersResponse> {
     const user = await this.findById(userId);
 
-    if (!user) throw new NotFoundException(USER_NOT_FOUND);
+    if (!user) throw new WsException(USER_NOT_FOUND);
 
     return await this.saveAndSelect({
       id: user.id,
@@ -127,7 +124,7 @@ export class UsersService {
     try {
       await this.usersRepository.delete(userIds);
     } catch (error: any) {
-      throw new InternalServerErrorException(FAILED_REMOVE_USERS);
+      throw new WsException(FAILED_REMOVE_USERS);
     }
   }
 
@@ -155,32 +152,10 @@ export class UsersService {
   }
 
   // -------------------------------------------------------------
-  public async isValidUser(userId: string, roles: Role[]): Promise<boolean> {
-    const user = await this.findOne({ id: userId });
-
-    const rolesMatch = user.roles.every((role) => roles.includes(role));
-
-    if (user && rolesMatch) return true;
-
-    return false;
-  }
-
-  // -------------------------------------------------------------
-  public async setOnlineStatus(
-    userId: string,
-    onlineStatus: boolean,
-  ): Promise<UsersResponse> {
-    return await this.saveAndSelect({
-      id: userId,
-      online: onlineStatus,
-    });
-  }
-
-  // -------------------------------------------------------------
   public async enableActivityUser(userId: string): Promise<UsersResponse> {
     const user = await this.findById(userId);
 
-    if (!user) throw new NotFoundException(USER_NOT_FOUND);
+    if (!user) throw new WsException(USER_NOT_FOUND);
 
     let userRoles: Role[] = user.roles;
 
@@ -202,7 +177,7 @@ export class UsersService {
   public async disableActivityUser(userId: string): Promise<UsersResponse> {
     const user = await this.findById(userId);
 
-    if (!user) throw new NotFoundException(USER_NOT_FOUND);
+    if (!user) throw new WsException(USER_NOT_FOUND);
 
     let userRoles = user.roles;
 
