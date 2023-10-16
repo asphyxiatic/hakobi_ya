@@ -31,10 +31,6 @@ export class AuthGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     socket.user = joinedUser;
 
-    console.log(
-      `Connection ${joinedUser.login}, roles: ${joinedUser.roles.join(', ')}`,
-    );
-
     this.server.emit(WsOutgoingEvent.USER_ONLINE_STATUS, joinedUser.userId);
   }
 
@@ -45,8 +41,6 @@ export class AuthGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const disconnectingUser = socket.user;
 
     if (!disconnectingUser) return;
-
-    console.log(`Disconnect ${disconnectingUser.login}`);
 
     this.server.emit(
       WsOutgoingEvent.USER_OFFLINE_STATUS,

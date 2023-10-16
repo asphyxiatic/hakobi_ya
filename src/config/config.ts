@@ -15,4 +15,5 @@ export default cleanEnv(process.env, {
   MAIL_FROM: str(),
   WS_CORS_ORIGIN: str({ default: '*' }),
   APP_CORS_ORIGIN: str({ default: '*' }),
+  NODE_ENV: str({ default: 'development' }),
 });
